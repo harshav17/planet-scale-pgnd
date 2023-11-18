@@ -1,2 +1,3 @@
 .env
 cmd/planetscaled/planetscaled
+cmd/planetscaled/__debug_*

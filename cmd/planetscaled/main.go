@@ -11,8 +11,8 @@ import (
 	planetscale "github.com/harshav17/planet_scale"
 	"github.com/harshav17/planet_scale/db"
 	"github.com/harshav17/planet_scale/http"
+	utilities "github.com/harshav17/planet_scale/utilites"
 	"github.com/joho/godotenv"
-	"github.com/lmittmann/tint"
 )
 
 func main() {
@@ -59,7 +59,7 @@ func NewMain() *Main {
 }
 
 func (m *Main) Run(ctx context.Context) (err error) {
-	logger := slog.New(tint.NewHandler(os.Stdout, nil))
+	logger := utilities.GetLogger()
 	slog.SetDefault(logger)
 
 	DSN, ok := os.LookupEnv("DSN")

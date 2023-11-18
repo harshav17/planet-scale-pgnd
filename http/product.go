@@ -44,7 +44,12 @@ func (c *productController) HandleGetProduct(w http.ResponseWriter, r *http.Requ
 		return nil
 	}
 
-	c.tm.ExecuteInTx(r.Context(), getProductFunc)
+	err = c.tm.ExecuteInTx(r.Context(), getProductFunc)
+	if err != nil {
+		slog.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.Write([]byte(fmt.Sprintf("title:%v", product)))
 }

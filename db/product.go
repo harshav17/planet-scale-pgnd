@@ -28,7 +28,6 @@ func (r *productRepo) Get(tx *sql.Tx, productID int64) (*planetscale.Product, er
 			id = ?
 	`
 
-	slog.Info("loading all products")
 	var product planetscale.Product
 	row := tx.QueryRow(query, productID)
 	err := row.Scan(&product.ID)
@@ -39,7 +38,7 @@ func (r *productRepo) Get(tx *sql.Tx, productID int64) (*planetscale.Product, er
 		}
 		return nil, err
 	}
-	slog.Info("loaded product", "productID", product.ID)
+	slog.Info("loaded product", slog.Int64("id", product.ID))
 
 	return &product, nil
 }
