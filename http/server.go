@@ -5,10 +5,13 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	planetscale "github.com/harshav17/planet_scale"
+	"github.com/lmittmann/tint"
+	slogchi "github.com/samber/slog-chi"
 )
 
 // ShutdownTimeout is the time given for outstanding requests to finish before shutdown.
@@ -25,6 +28,9 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 		server: &http.Server{},
 		router: chi.NewRouter(),
 	}
+
+	logger := slog.New(tint.NewHandler(os.Stdout, nil))
+	s.router.Use(slogchi.New(logger))
 
 	s.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Welcome to TaleTime!"))
