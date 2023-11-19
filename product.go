@@ -16,5 +16,6 @@ type (
 
 	ProductController interface {
 		HandleGetProduct(w http.ResponseWriter, r *http.Request)
+		HandlePostProduct(w http.ResponseWriter, r *http.Request)
 	}
 )
