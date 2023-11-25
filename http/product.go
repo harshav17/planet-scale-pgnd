@@ -2,7 +2,9 @@ package http
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -51,5 +53,26 @@ func (c *productController) HandleGetProduct(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("title:%v", product)))
+	// Format returned data based on HTTP accept header.
+	switch r.Header.Get("Accept") {
+	case "application/json":
+		w.Header().Set("Content-type", "application/json")
+		if err := json.NewEncoder(w).Encode(product); err != nil {
+			slog.Error(err.Error())
+			return
+		}
+		w.Write([]byte(fmt.Sprintf("title:%v", product)))
+	default:
+		var tmplHtml = "index.html"
+		tmpl, err := template.New(tmplHtml).ParseFiles(tmplHtml)
+		if err != nil {
+			slog.Error(err.Error())
+			return
+		}
+		err = tmpl.Execute(w, product)
+		if err != nil {
+			slog.Error(err.Error())
+			return
+		}
+	}
 }
