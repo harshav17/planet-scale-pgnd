@@ -76,3 +76,31 @@ func (c *productController) HandleGetProduct(w http.ResponseWriter, r *http.Requ
 		}
 	}
 }
+
+func (c *productController) HandlePostProduct(w http.ResponseWriter, r *http.Request) {
+	var product planetscale.Product
+	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
+		slog.Error(err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var productID int64
+	createProductFunc := func(tx *sql.Tx) error {
+		err := c.repos.Product.Create(tx, &product)
+		if err != nil {
+			slog.Error(err.Error())
+		}
+		return nil
+	}
+
+	err := c.tm.ExecuteInTx(r.Context(), createProductFunc)
+	if err != nil {
+		slog.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Location", fmt.Sprintf("/products/%d", productID))
+	w.WriteHeader(http.StatusCreated)
+}
