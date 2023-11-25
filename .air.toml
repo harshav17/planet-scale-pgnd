@@ -1,0 +1,11 @@
+# Config file for [Air](https://github.com/cosmtrek/air) in TOML format
+
+# Working directory
+# . or absolute path, please note that the directories following must be under root.
+root = "./cmd/planetscaled"
+
+[build]
+# Just plain old shell command. You could use `make` as well.
+cmd = "go build ./cmd/planetscaled"
+# Binary file yields from `cmd`.
+bin = "planetscaled"

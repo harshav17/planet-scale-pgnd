@@ -8,5 +8,6 @@ import (
 )
 
 func GetLogger() *slog.Logger {
+	// TODO - use JSON and separate pretty printing for local dev
 	return slog.New(tint.NewHandler(os.Stdout, nil))
 }

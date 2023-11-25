@@ -42,3 +42,26 @@ func (r *productRepo) Get(tx *sql.Tx, productID int64) (*planetscale.Product, er
 
 	return &product, nil
 }
+
+func (r *productRepo) Create(tx *sql.Tx, product *planetscale.Product) error {
+	query := `
+		INSERT INTO
+			products
+			(id, name, price)
+		VALUES
+			(?, ?, ?)
+	`
+
+	result, err := tx.Exec(query, product.ID, product.Name, product.Price)
+	if err != nil {
+		return err
+	}
+	productID, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	product.ID = productID
+	slog.Info("created product", slog.Int64("id", product.ID))
+
+	return nil
+}
