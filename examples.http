@@ -2,6 +2,11 @@
 curl --request GET \
   --url http://localhost:8080/products/1
 
+### product JSON get
+curl --request GET \
+  --url http://localhost:8080/products/1 \
+  --header 'accept: application/json'
+
 ### product create
 curl --request POST \
   --url http://localhost:8080/products \
@@ -10,3 +15,7 @@ curl --request POST \
   "name": "product 1",
   "price": 1000
 }'
+
+### get css
+curl --request GET \
+  --url http://localhost:8080/css/output.css

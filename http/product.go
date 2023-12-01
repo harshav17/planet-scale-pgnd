@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -61,15 +60,12 @@ func (c *productController) HandleGetProduct(w http.ResponseWriter, r *http.Requ
 			slog.Error(err.Error())
 			return
 		}
+		// TODO write better JSON back
 		w.Write([]byte(fmt.Sprintf("title:%v", product)))
 	default:
-		var tmplHtml = "index.html"
-		tmpl, err := template.New(tmplHtml).ParseFiles(tmplHtml)
-		if err != nil {
-			slog.Error(err.Error())
-			return
-		}
-		err = tmpl.Execute(w, product)
+		// TODO load template using go embed
+		var data interface{}
+		err := templates.ExecuteTemplate(w, "index.html", data)
 		if err != nil {
 			slog.Error(err.Error())
 			return

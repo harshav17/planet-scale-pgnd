@@ -2,15 +2,28 @@ package http
 
 import (
 	"context"
+	"embed"
 	"log/slog"
 	"net"
 	"net/http"
+	"text/template"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	planetscale "github.com/harshav17/planet_scale"
 	utilities "github.com/harshav17/planet_scale/utilites"
 	slogchi "github.com/samber/slog-chi"
+)
+
+var (
+	//go:embed all:templates/*
+	templateFS embed.FS
+
+	//go:embed css/*
+	css embed.FS
+
+	//parsed templates
+	templates = template.Must(template.ParseFS(templateFS, "templates/*"))
 )
 
 // ShutdownTimeout is the time given for outstanding requests to finish before shutdown.
@@ -30,6 +43,9 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 
 	logger := utilities.GetLogger()
 	s.router.Use(slogchi.New(logger))
+
+	// Assuming your CSS file is in a directory named 'css'
+	s.router.Handle("/css/output.css", http.FileServer(http.FS(css)))
 
 	s.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Welcome to TaleTime!"))

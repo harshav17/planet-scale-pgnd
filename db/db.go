@@ -66,6 +66,7 @@ func (db *DB) Close() error {
 	return nil
 }
 
+// TODO add migration support
 func (db *DB) migrate() error {
 	m, err := migrate.New(
 		"file://../../db/migrations",
