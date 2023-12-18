@@ -21,7 +21,9 @@ func NewProductRepo(db *DB) *productRepo {
 func (r *productRepo) Get(tx *sql.Tx, productID int64) (*planetscale.Product, error) {
 	query := `
 		SELECT
-			id
+			id,
+			name,
+			price
 		FROM
 			products
 		WHERE
@@ -30,7 +32,7 @@ func (r *productRepo) Get(tx *sql.Tx, productID int64) (*planetscale.Product, er
 
 	var product planetscale.Product
 	row := tx.QueryRow(query, productID)
-	err := row.Scan(&product.ID)
+	err := row.Scan(&product.ID, &product.Name, &product.Price)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// Handle no rows error specifically if needed
@@ -47,12 +49,12 @@ func (r *productRepo) Create(tx *sql.Tx, product *planetscale.Product) error {
 	query := `
 		INSERT INTO
 			products
-			(id, name, price)
+			(name, price)
 		VALUES
-			(?, ?, ?)
+			(?, ?)
 	`
 
-	result, err := tx.Exec(query, product.ID, product.Name, product.Price)
+	result, err := tx.Exec(query, product.Name, product.Price)
 	if err != nil {
 		return err
 	}

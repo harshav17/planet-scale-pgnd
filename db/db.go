@@ -3,14 +3,20 @@ package db
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
+	"log"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/lib/pq"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
+
+//go:embed migrations/*.sql
+var migrationFS embed.FS
 
 type DB struct {
 	db     *sql.DB
@@ -46,10 +52,9 @@ func (db *DB) Open() error {
 		return err
 	}
 
-	// TODO split DATABASE_URL into vars for migration use cases with protocol: cockroachdb
-	// if err := db.migrate(); err != nil {
-	// 	return fmt.Errorf("migrate: %w", err)
-	// }
+	if err := db.migrate(); err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
 
 	return nil
 }
@@ -66,11 +71,22 @@ func (db *DB) Close() error {
 	return nil
 }
 
-// TODO add migration support
 func (db *DB) migrate() error {
-	m, err := migrate.New(
-		"file://../../db/migrations",
-		db.DSN)
+	dbInstance, err := mysql.WithInstance(db.db, &mysql.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	sourceInstance, err := iofs.New(migrationFS, "migrations")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	m, err := migrate.NewWithInstance(
+		"iofs",
+		sourceInstance,
+		"planetscale-pgnd", // TODO does this not matter at all?
+		dbInstance,
+	)
 	if err != nil {
 		return err
 	}

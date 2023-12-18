@@ -7,7 +7,23 @@ import (
 	"github.com/lmittmann/tint"
 )
 
+type ENV string
+
+const (
+	Development ENV = "development"
+	Production  ENV = "production"
+)
+
 func GetLogger() *slog.Logger {
-	// TODO - use JSON and separate pretty printing for local dev
-	return slog.New(tint.NewHandler(os.Stdout, nil))
+	env, ok := os.LookupEnv("APP_ENV")
+	if !ok {
+		env = "development"
+	}
+
+	switch env {
+	case "production":
+		return slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	default:
+		return slog.New(tint.NewHandler(os.Stdout, nil))
+	}
 }

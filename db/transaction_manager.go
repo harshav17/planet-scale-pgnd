@@ -15,7 +15,7 @@ func NewTransactionManager(db *DB) *TransactionManager {
 	}
 }
 
-func (tm *TransactionManager) ExecuteInTx(ctx context.Context, fn func(*sql.Tx) error) error {
+func (tm TransactionManager) ExecuteInTx(ctx context.Context, fn func(*sql.Tx) error) error {
 	// create a trascation from ctx and execute fn
 	tx, err := tm.db.db.BeginTx(ctx, nil)
 	if err != nil {

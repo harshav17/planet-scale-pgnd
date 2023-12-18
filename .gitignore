@@ -4,3 +4,4 @@ cmd/planetscaled/__debug_*
 tmp/*
 planetscaled
 node_modules
+docker/
