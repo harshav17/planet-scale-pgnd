@@ -10,10 +10,12 @@
   </head>
   <body>
     <main>
+      {{ template "header.html" . }}
       <div class="md:container md:mx-auto">
-        <h1 class="text-3xl text-green-700">Go + HTMX + Tailwind Example</h1>
+        <h1 class="text-3xl">Go + HTMX + Tailwind Example</h1>
         <br/>
-        <span class="text-xl">Companies</span>
+        <span class="text-xl">products</span>
+        <div>{{ template "products.html" . }}</div>
       </div>
     </main>
   </body>

@@ -56,6 +56,7 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 			r.Get("/", controllers.Product.HandleGetProduct)
 		})
 		r.Post("/", controllers.Product.HandlePostProduct)
+		r.Get("/add", controllers.Product.HandleProductAdd)
 	})
 
 	s.server.Handler = s.router

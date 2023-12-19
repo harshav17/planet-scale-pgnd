@@ -9,7 +9,7 @@ type (
 	Product struct {
 		ID    int64   `json:"ID"`
 		Name  string  `json:"name"`
-		Price float32 `json:"price"`
+		Price float64 `json:"price"`
 	}
 
 	ProductRepo interface {
@@ -20,5 +20,6 @@ type (
 	ProductController interface {
 		HandleGetProduct(w http.ResponseWriter, r *http.Request)
 		HandlePostProduct(w http.ResponseWriter, r *http.Request)
+		HandleProductAdd(w http.ResponseWriter, r *http.Request)
 	}
 )
