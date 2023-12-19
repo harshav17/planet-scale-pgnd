@@ -54,8 +54,7 @@ func (c *productController) HandleGetProduct(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	default:
-		var data interface{}
-		err := templates.ExecuteTemplate(w, "index.html", data)
+		err := templates.ExecuteTemplate(w, "row.html", product)
 		if err != nil {
 			Error(w, r, err)
 			return

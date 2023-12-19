@@ -48,7 +48,12 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 	s.router.Handle("/css/output.css", http.FileServer(http.FS(css)))
 
 	s.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Welcome to TaleTime!"))
+		var data interface{}
+		err := templates.ExecuteTemplate(w, "index.html", data)
+		if err != nil {
+			Error(w, r, err)
+			return
+		}
 	})
 
 	s.router.Route("/products", func(r chi.Router) {
