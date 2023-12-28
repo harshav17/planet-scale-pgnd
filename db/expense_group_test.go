@@ -110,3 +110,37 @@ func TestExpenseGroupRepo_UpdateExpenseGroup(t *testing.T) {
 		}
 	})
 }
+
+func TestExpenseGroupRepo_DeleteExpenseGroup(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+	ctx := context.Background()
+
+	t.Run("successful delete", func(t *testing.T) {
+		u, ctx := MustCreateUser(t, ctx, db.DB, &planetscale.User{
+			UserID: "test-user-id",
+			Name:   "test user",
+			Email:  "",
+		})
+
+		groupName := "test group"
+		eg, ctx := MustCreateExpenseGroup(t, ctx, db.DB, &planetscale.ExpenseGroup{
+			ExpenseGroupID: 1,
+			GroupName:      groupName,
+			CreateBy:       u.UserID,
+		})
+
+		tx, err := db.db.BeginTx(ctx, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := NewExpenseGroupRepo(db.DB).Delete(tx, eg.ExpenseGroupID); err != nil {
+			t.Fatal(err)
+		}
+
+		// Verify that the group was deleted
+		if _, err := NewExpenseGroupRepo(db.DB).Get(tx, eg.ExpenseGroupID); err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+}

@@ -68,3 +68,22 @@ func (r *expenseGroupRepo) Update(tx *sql.Tx, groupID int64, update *planetscale
 
 	return r.Get(tx, groupID)
 }
+
+func (r *expenseGroupRepo) Delete(tx *sql.Tx, groupID int64) error {
+	query := `DELETE FROM expense_groups WHERE group_id = ?`
+
+	result, err := tx.Exec(query, groupID)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no group member found with ID %d", groupID)
+	}
+	slog.Info("deleted expense group", slog.Int64("id", groupID))
+
+	return nil
+}
