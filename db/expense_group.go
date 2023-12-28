@@ -60,9 +60,12 @@ func (r *expenseGroupRepo) Update(tx *sql.Tx, groupID int64, update *planetscale
 	if err != nil {
 		return nil, err
 	}
-	_, err = result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return nil, err
+	}
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("no group member found with ID %d", groupID)
 	}
 	slog.Info("updated expense group", slog.Int64("id", groupID))
 
