@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"embed"
 	"fmt"
 	"log"
@@ -95,4 +96,33 @@ func (db *DB) migrate() error {
 	}
 
 	return nil
+}
+
+// NullTime represents a helper wrapper for time.Time. It automatically converts
+// time fields to/from RFC 3339 format. Also supports NULL for zero time.
+type NullTime time.Time
+
+// Scan reads a time value from the database.
+func (n *NullTime) Scan(value interface{}) error {
+	if value == nil {
+		*(*time.Time)(n) = time.Time{}
+		return nil
+	} else if v, ok := value.([]byte); ok {
+		t, err := time.Parse("2006-01-02 15:04:05", string(v))
+		if err != nil {
+			return err
+		}
+
+		*(*time.Time)(n) = t
+		return nil
+	}
+	return fmt.Errorf("NullTime: cannot scan to time.Time: %T", value)
+}
+
+// Value formats a time value for the database.
+func (n *NullTime) Value() (driver.Value, error) {
+	if n == nil || (*time.Time)(n).IsZero() {
+		return nil, nil
+	}
+	return (*time.Time)(n).UTC().Format(time.RFC3339), nil
 }

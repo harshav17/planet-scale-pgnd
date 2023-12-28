@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS expense_participants (
     note VARCHAR(255),  -- Optional field for any notes related to the split (e.g., reasons for uneven split)
     PRIMARY KEY (expense_id, user_id),
     FOREIGN KEY (expense_id) REFERENCES expenses(expense_id),
-    FOREIGN KEY (user_id) REFERENCES users(auth0_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
 );

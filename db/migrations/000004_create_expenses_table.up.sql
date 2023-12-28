@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     amount DECIMAL(10, 2),
     description VARCHAR(100),
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (group_id) REFERENCES groups(group_id),
+    FOREIGN KEY (group_id) REFERENCES expense_groups(group_id),
     FOREIGN KEY (paid_by) REFERENCES users(user_id)
     -- Add additional details if needed like receipt image path.
 );
