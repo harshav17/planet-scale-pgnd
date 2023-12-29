@@ -8,48 +8,45 @@ import (
 	planetscale "github.com/harshav17/planet_scale"
 )
 
-func MustCreateUser(tb testing.TB, ctx context.Context, db *DB, u *planetscale.User) (*planetscale.User, context.Context) {
+func MustCreateUser(tb testing.TB, tx *sql.Tx, db *DB, u *planetscale.User) *planetscale.User {
 	tb.Helper()
 
-	createUserFunc := func(tx *sql.Tx) error {
-		if err := NewUserRepo(db).Create(tx, u); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	tm := NewTransactionManager(db)
-	err := tm.ExecuteInTx(ctx, createUserFunc)
-	if err != nil {
+	if err := NewUserRepo(db).Create(tx, u); err != nil {
 		tb.Fatal(err)
 	}
-	return u, ctx
+
+	return u
 }
 
-func TestUserRepo_GetUser(t *testing.T) {
+func TestUserRepo_All(t *testing.T) {
+	t.Parallel()
+
 	db := MustOpenDB(t)
 	defer MustCloseDB(t, db)
 	ctx := context.Background()
 
-	t.Run("successful get", func(t *testing.T) {
-		email := "test@user.com"
-		name := "test user"
-		u, ctx := MustCreateUser(t, ctx, db.DB, &planetscale.User{
-			UserID: "test-user-id",
-			Name:   name,
-			Email:  email,
-		})
+	t.Run("Get Tests", func(t *testing.T) {
+		t.Run("successful get", func(t *testing.T) {
+			tx, err := db.db.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback()
 
-		tx, err := db.db.BeginTx(ctx, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got, err := NewUserRepo(db.DB).Get(tx, u.UserID); err != nil {
-			t.Fatal(err)
-		} else if got.Email != email {
-			t.Fatalf("expected title to be %s, got %s", email, got.Email)
-		} else if got.Name != name {
-			t.Fatalf("expected title to be %s, got %s", name, got.Name)
-		}
+			email := "test@user.com"
+			name := "test user"
+			u := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id",
+				Name:   name,
+				Email:  email,
+			})
+			if got, err := NewUserRepo(db.DB).Get(tx, u.UserID); err != nil {
+				t.Fatal(err)
+			} else if got.Email != email {
+				t.Fatalf("expected title to be %s, got %s", email, got.Email)
+			} else if got.Name != name {
+				t.Fatalf("expected title to be %s, got %s", name, got.Name)
+			}
+		})
 	})
 }

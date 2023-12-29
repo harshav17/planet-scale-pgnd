@@ -37,6 +37,8 @@ func (tdb *testDB) TearDown() error {
 
 // Ensure the test database can open & close.
 func TestDB(t *testing.T) {
+	t.Parallel()
+
 	db := MustOpenDB(t)
 	MustCloseDB(t, db)
 }
