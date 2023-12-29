@@ -20,6 +20,7 @@ type (
 		Create(tx *sql.Tx, group *ExpenseGroup) error
 		Update(tx *sql.Tx, groupID int64, update *ExpenseGroupUpdate) (*ExpenseGroup, error)
 		Delete(tx *sql.Tx, groupID int64) error
+		ListAllForUser(tx *sql.Tx, userID string) ([]*ExpenseGroup, error)
 	}
 
 	ExpenseGroupUpdate struct {

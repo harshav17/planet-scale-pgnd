@@ -135,4 +135,56 @@ func TestExpenseGroupRepo_All(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("ListAllForUser Tests", func(t *testing.T) {
+		t.Run("successful filter", func(t *testing.T) {
+			tx, err := db.db.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback()
+
+			u := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id",
+				Name:   "test user",
+				Email:  "",
+			})
+			u2 := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id-2",
+				Name:   "test user 2",
+				Email:  "",
+			})
+
+			groupName := "test group"
+			eg := MustCreateExpenseGroup(t, tx, db.DB, &planetscale.ExpenseGroup{
+				GroupName: groupName,
+				CreateBy:  u.UserID,
+			})
+			eg2 := MustCreateExpenseGroup(t, tx, db.DB, &planetscale.ExpenseGroup{
+				GroupName: groupName,
+				CreateBy:  u2.UserID,
+			})
+
+			_ = MustCreateGroupMember(t, tx, db.DB, &planetscale.GroupMember{
+				GroupID: eg.ExpenseGroupID,
+				UserID:  u.UserID,
+			})
+			_ = MustCreateGroupMember(t, tx, db.DB, &planetscale.GroupMember{
+				GroupID: eg2.ExpenseGroupID,
+				UserID:  u2.UserID,
+			})
+
+			groups, err := NewExpenseGroupRepo(db.DB).ListAllForUser(tx, u.UserID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(groups) != 1 {
+				t.Fatalf("expected 1 group, got %d", len(groups))
+			}
+			if groups[0].GroupName != groupName {
+				t.Fatalf("expected group name to be %s, got %s", groupName, groups[0].GroupName)
+			}
+		})
+	})
+
 }

@@ -90,3 +90,28 @@ func (r *expenseGroupRepo) Delete(tx *sql.Tx, groupID int64) error {
 
 	return nil
 }
+
+func (r *expenseGroupRepo) ListAllForUser(tx *sql.Tx, userID string) ([]*planetscale.ExpenseGroup, error) {
+	// join with group_members to get all groups for a user
+	query := `SELECT eg.group_id, eg.group_name, eg.created_at, eg.created_by
+		FROM expense_groups eg
+		JOIN group_members gm ON gm.group_id = eg.group_id
+		WHERE gm.user_id = ?`
+
+	rows, err := tx.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var groups []*planetscale.ExpenseGroup
+	for rows.Next() {
+		var group planetscale.ExpenseGroup
+		err := rows.Scan(&group.ExpenseGroupID, &group.GroupName, (*NullTime)(&group.CreatedAt), &group.CreateBy)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, &group)
+	}
+
+	return groups, nil
+}
