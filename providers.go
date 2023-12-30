@@ -2,9 +2,11 @@ package planetscale
 
 type (
 	ControllerProvider struct {
-		Product ProductController
+		Product      ProductController
+		ExpenseGroup ExpenseGroupController
 	}
 	RepoProvider struct {
-		Product ProductRepo
+		Product      ProductRepo
+		ExpenseGroup ExpenseGroupRepo
 	}
 )

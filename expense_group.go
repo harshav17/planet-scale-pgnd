@@ -2,6 +2,7 @@ package planetscale
 
 import (
 	"database/sql"
+	"net/http"
 	"time"
 )
 
@@ -21,6 +22,14 @@ type (
 		Update(tx *sql.Tx, groupID int64, update *ExpenseGroupUpdate) (*ExpenseGroup, error)
 		Delete(tx *sql.Tx, groupID int64) error
 		ListAllForUser(tx *sql.Tx, userID string) ([]*ExpenseGroup, error)
+	}
+
+	ExpenseGroupController interface {
+		HandleGetExpenseGroups(w http.ResponseWriter, r *http.Request)
+		HandlePostExpenseGroup(w http.ResponseWriter, r *http.Request)
+		HandlePatchExpenseGroup(w http.ResponseWriter, r *http.Request)
+		HandleDeleteExpenseGroup(w http.ResponseWriter, r *http.Request)
+		HandleGetExpenseGroup(w http.ResponseWriter, r *http.Request)
 	}
 
 	ExpenseGroupUpdate struct {

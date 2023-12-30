@@ -25,6 +25,7 @@ func MustOpenServer(tb testing.TB) TestServer {
 	repos := planetscale.RepoProvider{}
 	controllers := planetscale.ControllerProvider{}
 	controllers.Product = NewProductController(&repos, &tm)
+	controllers.ExpenseGroup = NewExpenseGroupController(&repos, &tm)
 
 	server := NewServer(&controllers)
 

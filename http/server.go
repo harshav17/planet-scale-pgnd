@@ -64,6 +64,16 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 		r.Get("/add", controllers.Product.HandleProductAdd)
 	})
 
+	s.router.Route("/groups", func(r chi.Router) {
+		r.Get("/", controllers.ExpenseGroup.HandleGetExpenseGroups)
+		r.Post("/", controllers.ExpenseGroup.HandlePostExpenseGroup)
+		r.Route("/{groupID}", func(r chi.Router) {
+			r.Patch("/", controllers.ExpenseGroup.HandlePatchExpenseGroup)
+			r.Delete("/", controllers.ExpenseGroup.HandleDeleteExpenseGroup)
+			r.Get("/", controllers.ExpenseGroup.HandleGetExpenseGroup)
+		})
+	})
+
 	s.server.Handler = s.router
 	return s
 }
