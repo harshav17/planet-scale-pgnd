@@ -112,3 +112,41 @@ func (r *expenseRepo) Delete(tx *sql.Tx, expenseID int64) error {
 
 	return nil
 }
+
+func (r *expenseRepo) Find(tx *sql.Tx, filter planetscale.ExpenseFilter) ([]*planetscale.Expense, error) {
+	where := &findWhereClause{}
+	if filter.GroupID != 0 {
+		where.Add("group_id", filter.GroupID)
+	}
+
+	query := `
+		SELECT
+			expense_id,
+			group_id,
+			paid_by,
+			amount,
+			description,
+			timestamp,
+			created_at,
+			updated_at,
+			created_by,
+			updated_by
+		FROM expenses
+		` + where.ToClause()
+	rows, err := tx.Query(query, where.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var expenses []*planetscale.Expense
+	for rows.Next() {
+		var expense planetscale.Expense
+		err := rows.Scan(&expense.ExpenseID, &expense.GroupID, &expense.PaidBy, &expense.Amount, &expense.Description, (*NullTime)(&expense.Timestamp), (*NullTime)(&expense.CreatedAt), (*NullTime)(&expense.UpdatedAt), &expense.CreatedBy, &expense.UpdatedBy)
+		if err != nil {
+			return nil, err
+		}
+		expenses = append(expenses, &expense)
+	}
+
+	return expenses, nil
+}

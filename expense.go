@@ -24,6 +24,11 @@ type (
 		Create(tx *sql.Tx, expense *Expense) error
 		Delete(tx *sql.Tx, expenseID int64) error
 		Update(tx *sql.Tx, expenseID int64, expense *ExpenseUpdate) error
+		Find(tx *sql.Tx, filter ExpenseFilter) ([]*Expense, error)
+	}
+
+	ExpenseFilter struct {
+		GroupID int64
 	}
 
 	ExpenseUpdate struct {

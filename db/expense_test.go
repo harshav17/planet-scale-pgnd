@@ -167,4 +167,47 @@ func TestExpenseRepo_All(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("Find Tests", func(t *testing.T) {
+		t.Run("successful find", func(t *testing.T) {
+			tx, err := db.db.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback()
+
+			u := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id",
+				Name:   "test user",
+				Email:  "",
+			})
+
+			eg := MustCreateExpenseGroup(t, tx, db.DB, &planetscale.ExpenseGroup{
+				GroupName: "test group",
+				CreateBy:  u.UserID,
+			})
+
+			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
+				GroupID:     eg.ExpenseGroupID,
+				PaidBy:      u.UserID,
+				Amount:      100,
+				Description: "test expense",
+				Timestamp:   time.Now(),
+				CreatedBy:   u.UserID,
+				UpdatedBy:   u.UserID,
+			})
+
+			filter := planetscale.ExpenseFilter{
+				GroupID: eg.ExpenseGroupID,
+			}
+
+			if got, err := NewExpenseRepo(db.DB).Find(tx, filter); err != nil {
+				t.Fatal(err)
+			} else if len(got) != 1 {
+				t.Fatalf("expected 1 expense, got %d", len(got))
+			} else if got[0].ExpenseID != e.ExpenseID {
+				t.Fatalf("expected expense id %d, got %d", e.ExpenseID, got[0].ExpenseID)
+			}
+		})
+	})
 }
