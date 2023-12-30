@@ -70,3 +70,32 @@ func (r *groupMemberRepo) Delete(tx *sql.Tx, groupID int64, userID string) error
 
 	return nil
 }
+
+func (r *groupMemberRepo) Find(tx *sql.Tx, filter planetscale.GroupMemberFilter) ([]*planetscale.GroupMember, error) {
+	where := &findWhereClause{}
+	if filter.GroupID != 0 {
+		where.Add("group_id", filter.GroupID)
+	}
+
+	query := `
+		SELECT group_id, user_id, joined_at
+		FROM group_members
+		` + where.ToClause()
+
+	rows, err := tx.Query(query, where.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var groupMembers []*planetscale.GroupMember
+	for rows.Next() {
+		var group planetscale.GroupMember
+		err := rows.Scan(&group.GroupID, &group.UserID, (*NullTime)(&group.JoinedAt))
+		if err != nil {
+			return nil, err
+		}
+		groupMembers = append(groupMembers, &group)
+	}
+
+	return groupMembers, nil
+}

@@ -7,6 +7,7 @@ import (
 	"embed"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -125,4 +126,29 @@ func (n *NullTime) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return (*time.Time)(n).UTC().Format(time.RFC3339), nil
+}
+
+// TODO consider moving to a DB util class
+type findWhereClause struct {
+	columns []string
+	values  []interface{}
+}
+
+func (w *findWhereClause) Add(column string, value interface{}) {
+	w.columns = append(w.columns, column)
+	w.values = append(w.values, value)
+}
+
+func (w *findWhereClause) ToClause() string {
+	s := strings.Builder{}
+	if len(w.columns) > 0 {
+		s.WriteString("WHERE ")
+		for i, column := range w.columns {
+			if i > 0 {
+				s.WriteString(" AND ")
+			}
+			s.WriteString(column + " = ?")
+		}
+	}
+	return s.String()
 }

@@ -169,4 +169,38 @@ func TestGroupMemberRepo_All(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("Find Tests", func(t *testing.T) {
+		t.Run("successful find", func(t *testing.T) {
+			tx, err := db.db.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback()
+
+			u := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id",
+				Name:   "test user",
+				Email:  "",
+			})
+
+			g := MustCreateExpenseGroup(t, tx, db.DB, &planetscale.ExpenseGroup{
+				GroupName: "test group",
+				CreateBy:  u.UserID,
+			})
+
+			gm := MustCreateGroupMember(t, tx, db.DB, &planetscale.GroupMember{
+				GroupID: g.ExpenseGroupID,
+				UserID:  u.UserID,
+			})
+
+			if got, err := NewGroupMemberRepo(db.DB).Find(tx, planetscale.GroupMemberFilter{
+				GroupID: gm.GroupID,
+			}); err != nil {
+				t.Fatal(err)
+			} else if len(got) != 1 {
+				t.Fatalf("expected length of group members to be 1, got %d", len(got))
+			}
+		})
+	})
 }
