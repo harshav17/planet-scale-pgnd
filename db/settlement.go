@@ -72,21 +72,56 @@ func (r *settlementRepo) Delete(tx *sql.Tx, settlementID int64) error {
 	return nil
 }
 
-func (r *settlementRepo) Update(tx *sql.Tx, settlementID int64, settlement *planetscale.SettlementUpdate) error {
+func (r *settlementRepo) Update(tx *sql.Tx, settlementID int64, settlement *planetscale.SettlementUpdate) (*planetscale.Settlement, error) {
 	query := `UPDATE settlements SET group_id = ? WHERE settlement_id = ?`
 
 	result, err := tx.Exec(query, settlement.GroupID, settlementID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if rowsAffected == 0 {
-		return fmt.Errorf("no group member found with ID %d", settlementID)
+		return nil, fmt.Errorf("no group member found with ID %d", settlementID)
 	}
 	slog.Info("updated group member", slog.Int64("id", settlementID))
 
-	return nil
+	return r.Get(tx, settlementID)
+}
+
+func (r *settlementRepo) Find(tx *sql.Tx, filter planetscale.SettlementFilter) ([]*planetscale.Settlement, error) {
+	where := &findWhereClause{}
+	if filter.GroupID != 0 {
+		where.Add("group_id", filter.GroupID)
+	}
+
+	query := `
+		SELECT
+			settlement_id,
+			group_id,
+			paid_by,
+			paid_to,
+			Amount,
+			timestamp
+		FROM settlements
+		` + where.ToClause()
+
+	rows, err := tx.Query(query, where.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var settlements []*planetscale.Settlement
+	for rows.Next() {
+		var settlement planetscale.Settlement
+		err := rows.Scan(&settlement.SettlementID, &settlement.GroupID, &settlement.PaidBy, &settlement.PaidTo, &settlement.Amount, (*NullTime)(&settlement.Timestamp))
+		if err != nil {
+			return nil, err
+		}
+		settlements = append(settlements, &settlement)
+	}
+
+	return settlements, nil
 }

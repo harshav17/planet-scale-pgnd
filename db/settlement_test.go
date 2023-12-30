@@ -222,7 +222,7 @@ func TestSettlementRepo_All(t *testing.T) {
 				GroupID: &g2.ExpenseGroupID,
 			}
 
-			if err := NewSettlementRepo(db.DB).Update(tx, s.SettlementID, su); err != nil {
+			if _, err := NewSettlementRepo(db.DB).Update(tx, s.SettlementID, su); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -240,8 +240,51 @@ func TestSettlementRepo_All(t *testing.T) {
 			}
 
 			// TODO - return better error messages from the repo
-			if err := NewSettlementRepo(db.DB).Update(tx, 100, su); err == nil {
+			if _, err := NewSettlementRepo(db.DB).Update(tx, 100, su); err == nil {
 				t.Fatal("expected error, got nil")
+			}
+		})
+	})
+
+	t.Run("find tests", func(t *testing.T) {
+		t.Run("successful find", func(t *testing.T) {
+			tx, err := db.db.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback()
+
+			u := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id",
+				Name:   "test user",
+				Email:  "",
+			})
+			u2 := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id-2",
+				Name:   "test user 2",
+				Email:  "",
+			})
+			g := MustCreateExpenseGroup(t, tx, db.DB, &planetscale.ExpenseGroup{
+				GroupName: "test group",
+				CreateBy:  u.UserID,
+			})
+			s := MustCreateSettlement(t, tx, db.DB, &planetscale.Settlement{
+				GroupID: g.ExpenseGroupID,
+				PaidBy:  u.UserID,
+				PaidTo:  u2.UserID,
+				Amount:  100,
+			})
+
+			f := planetscale.SettlementFilter{
+				GroupID: g.ExpenseGroupID,
+			}
+
+			if got, err := NewSettlementRepo(db.DB).Find(tx, f); err != nil {
+				t.Fatal(err)
+			} else if len(got) != 1 {
+				t.Fatalf("expected 1 settlement, got %d", len(got))
+			} else if got[0].Amount != s.Amount {
+				t.Fatalf("expected title to be %f, got %f", s.Amount, got[0].Amount)
 			}
 		})
 	})
