@@ -27,6 +27,7 @@ func MustOpenServer(tb testing.TB) TestServer {
 	controllers.Product = NewProductController(&repos, &tm)
 	controllers.ExpenseGroup = NewExpenseGroupController(&repos, &tm)
 	controllers.GroupMember = NewGroupMemberController(&repos, &tm)
+	controllers.Expense = NewExpenseController(&repos, &tm)
 
 	server := NewServer(&controllers)
 

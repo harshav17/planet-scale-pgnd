@@ -17,7 +17,22 @@ func NewExpenseRepo(db *DB) *expenseRepo {
 }
 
 func (r *expenseRepo) Get(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
-	query := `SELECT expense_id, group_id, paid_by, amount, description, timestamp, created_at, updated_at, created_by, updated_by FROM expenses WHERE expense_id = ?`
+	query := `
+		SELECT 
+			expense_id, 
+			group_id, 
+			paid_by, 
+			amount, 
+			description, 
+			timestamp, 
+			created_at, 
+			updated_at, 
+			created_by, 
+			updated_by 
+		FROM 
+			expenses 
+		WHERE 
+			expense_id = ?`
 
 	var expense planetscale.Expense
 	row := tx.QueryRow(query, expenseID)

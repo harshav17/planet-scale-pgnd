@@ -76,6 +76,16 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 				r.Post("/", controllers.GroupMember.HandlePostGroupMember)
 				r.Delete("/{userID}", controllers.GroupMember.HandleDeleteGroupMember)
 			})
+			r.Get("/expenses", controllers.Expense.HandleGetGroupExpenses)
+		})
+	})
+
+	s.router.Route("/expenses", func(r chi.Router) {
+		r.Post("/", controllers.Expense.HandlePostExpense)
+		r.Route("/{expenseID}", func(r chi.Router) {
+			r.Patch("/", controllers.Expense.HandlePatchExpense)
+			r.Delete("/", controllers.Expense.HandleDeleteExpense)
+			r.Get("/", controllers.Expense.HandleGetExpense)
 		})
 	})
 
