@@ -19,3 +19,14 @@ curl --request POST \
 ### get css
 curl --request GET \
   --url http://localhost:8080/css/output.css
+
+
+### create group
+curl --request POST \
+  --url http://localhost:8080/groups \
+  --header 'content-type: application/json' \
+  --header 'accept: application/json' \
+  --data '{
+    "group_name": "group 1",
+    "created_by": "test_user_id"
+  }'

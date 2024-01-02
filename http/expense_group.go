@@ -26,7 +26,7 @@ func (c *expenseGroupController) HandleGetExpenseGroups(w http.ResponseWriter, r
 	var expenseGroups []*planetscale.ExpenseGroup
 	var err error
 	getExpenseGroupFunc := func(tx *sql.Tx) error {
-		expenseGroups, err = c.repos.ExpenseGroup.ListAllForUser(tx, "test-user-id" /* TODO remove user id */)
+		expenseGroups, err = c.repos.ExpenseGroup.ListAllForUser(tx, "test_user_id" /* TODO remove user id */)
 		if err != nil {
 			return err
 		}
@@ -74,6 +74,14 @@ func (c *expenseGroupController) HandlePostExpenseGroup(w http.ResponseWriter, r
 
 	createExpenseGroupFunc := func(tx *sql.Tx) error {
 		err = c.repos.ExpenseGroup.Create(tx, &expenseGroup)
+		if err != nil {
+			return err
+		}
+
+		err = c.repos.GroupMember.Create(tx, &planetscale.GroupMember{
+			GroupID: expenseGroup.ExpenseGroupID,
+			UserID:  expenseGroup.CreateBy,
+		})
 		if err != nil {
 			return err
 		}

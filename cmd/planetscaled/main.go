@@ -92,6 +92,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	controllers.ExpenseGroup = http.NewExpenseGroupController(&repos, tm)
 	controllers.GroupMember = http.NewGroupMemberController(&repos, tm)
 	controllers.Expense = http.NewExpenseController(&repos, tm)
+	controllers.Settlement = http.NewSettlementController(&repos, tm)
 
 	// start the HTTP server.
 	m.HTTPServer = http.NewServer(&controllers)

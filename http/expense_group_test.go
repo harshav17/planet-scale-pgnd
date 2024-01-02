@@ -137,6 +137,12 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 					return nil
 				},
 			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				CreateFn: func(tx *sql.Tx, gm *planetscale.GroupMember) error {
+					return nil
+				},
+			}
+			// TODO how do you test a real service / complex operations involved?
 
 			body, err := json.Marshal(expenseGroup)
 			if err != nil {
