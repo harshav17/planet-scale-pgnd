@@ -93,7 +93,7 @@ func (r *expenseGroupRepo) Delete(tx *sql.Tx, groupID int64) error {
 
 func (r *expenseGroupRepo) ListAllForUser(tx *sql.Tx, userID string) ([]*planetscale.ExpenseGroup, error) {
 	// join with group_members to get all groups for a user
-	query := `SELECT eg.group_id, eg.group_name, eg.created_at, eg.created_by
+	query := `SELECT eg.group_id, eg.group_name, eg.created_at, eg.created_by, eg.updated_at, eg.updated_by
 		FROM expense_groups eg
 		JOIN group_members gm ON gm.group_id = eg.group_id
 		WHERE gm.user_id = ?`
@@ -106,7 +106,7 @@ func (r *expenseGroupRepo) ListAllForUser(tx *sql.Tx, userID string) ([]*planets
 	var groups []*planetscale.ExpenseGroup
 	for rows.Next() {
 		var group planetscale.ExpenseGroup
-		err := rows.Scan(&group.ExpenseGroupID, &group.GroupName, (*NullTime)(&group.CreatedAt), &group.CreateBy)
+		err := rows.Scan(&group.ExpenseGroupID, &group.GroupName, (*NullTime)(&group.CreatedAt), &group.CreateBy, (*NullTime)(&group.UpdatedAt), &group.UpdatedBy)
 		if err != nil {
 			return nil, err
 		}
