@@ -78,8 +78,8 @@ func (r *groupMemberRepo) Find(tx *sql.Tx, filter planetscale.GroupMemberFilter)
 	}
 
 	query := `
-		SELECT group_id, user_id, joined_at
-		FROM group_members
+		SELECT gm.group_id, gm.user_id, gm.joined_at, u.email, u.name
+		FROM group_members gm JOIN users u ON gm.user_id = u.user_id
 		` + where.ToClause()
 
 	rows, err := tx.Query(query, where.values...)
@@ -89,12 +89,14 @@ func (r *groupMemberRepo) Find(tx *sql.Tx, filter planetscale.GroupMemberFilter)
 
 	var groupMembers []*planetscale.GroupMember
 	for rows.Next() {
-		var group planetscale.GroupMember
-		err := rows.Scan(&group.GroupID, &group.UserID, (*NullTime)(&group.JoinedAt))
+		var groupMember planetscale.GroupMember
+		var user planetscale.User
+		err := rows.Scan(&groupMember.GroupID, &groupMember.UserID, (*NullTime)(&groupMember.JoinedAt), &user.Email, &user.Name)
 		if err != nil {
 			return nil, err
 		}
-		groupMembers = append(groupMembers, &group)
+		groupMember.User = &user
+		groupMembers = append(groupMembers, &groupMember)
 	}
 
 	return groupMembers, nil

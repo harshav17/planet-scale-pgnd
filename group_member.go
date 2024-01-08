@@ -11,6 +11,8 @@ type (
 		GroupID  int64     `json:"group_id"`
 		UserID   string    `json:"user_id"`
 		JoinedAt time.Time `json:"joined_at"`
+
+		User *User `json:"user"`
 	}
 
 	GroupMemberRepo interface {

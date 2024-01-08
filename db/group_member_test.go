@@ -200,6 +200,18 @@ func TestGroupMemberRepo_All(t *testing.T) {
 				t.Fatal(err)
 			} else if len(got) != 1 {
 				t.Fatalf("expected length of group members to be 1, got %d", len(got))
+			} else if got[0].GroupID != gm.GroupID {
+				t.Fatalf("expected group id to be %d, got %d", gm.GroupID, got[0].GroupID)
+			} else if got[0].UserID != gm.UserID {
+				t.Fatalf("expected user id to be %s, got %s", gm.UserID, got[0].UserID)
+			} else if got[0].User == nil {
+				t.Fatal("expected user to be populated, got nil")
+			} else if got[0].User.UserID != u.UserID {
+				t.Fatalf("expected user id to be %s, got %s", u.UserID, got[0].User.UserID)
+			} else if got[0].User.Name != u.Name {
+				t.Fatalf("expected user name to be %s, got %s", u.Name, got[0].User.Name)
+			} else if got[0].User.Email != u.Email {
+				t.Fatalf("expected user email to be %s, got %s", u.Email, got[0].User.Email)
 			}
 		})
 	})
