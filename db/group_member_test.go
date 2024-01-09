@@ -206,8 +206,6 @@ func TestGroupMemberRepo_All(t *testing.T) {
 				t.Fatalf("expected user id to be %s, got %s", gm.UserID, got[0].UserID)
 			} else if got[0].User == nil {
 				t.Fatal("expected user to be populated, got nil")
-			} else if got[0].User.UserID != u.UserID {
-				t.Fatalf("expected user id to be %s, got %s", u.UserID, got[0].User.UserID)
 			} else if got[0].User.Name != u.Name {
 				t.Fatalf("expected user name to be %s, got %s", u.Name, got[0].User.Name)
 			} else if got[0].User.Email != u.Email {

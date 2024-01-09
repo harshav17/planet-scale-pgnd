@@ -37,9 +37,9 @@ func (r *expenseGroupRepo) Get(tx *sql.Tx, groupID int64) (*planetscale.ExpenseG
 }
 
 func (r *expenseGroupRepo) Create(tx *sql.Tx, group *planetscale.ExpenseGroup) error {
-	query := `INSERT INTO expense_groups (group_name, created_by) VALUES (?, ?)`
+	query := `INSERT INTO expense_groups (group_name, created_by, updated_by) VALUES (?, ?, ?)`
 
-	result, err := tx.Exec(query, group.GroupName, group.CreateBy)
+	result, err := tx.Exec(query, group.GroupName, group.CreateBy, group.CreateBy)
 	if err != nil {
 		return err
 	}

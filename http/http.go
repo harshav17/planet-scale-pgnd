@@ -23,12 +23,12 @@ func ReceiveJson(w http.ResponseWriter, r *http.Request, thing any) error {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return planetscale.Errorf(planetscale.EINVALID, "invalid request payload")
+		return err
 	}
 
 	err = json.Unmarshal(body, thing)
 	if err != nil {
-		return planetscale.Errorf(planetscale.EINVALID, "invalid request payload")
+		return err
 	}
 
 	return nil
