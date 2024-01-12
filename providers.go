@@ -14,5 +14,6 @@ type (
 		GroupMember  GroupMemberRepo
 		Expense      ExpenseRepo
 		Settlement   SettlementRepo
+		SplitType    SplitTypeRepo
 	}
 )

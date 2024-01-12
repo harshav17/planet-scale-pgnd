@@ -64,7 +64,7 @@ func MustOpenDB(tb testing.TB) *testDB {
 		log.Fatalf("failed to get container external port: %v", err)
 	}
 
-	DSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", DbUser, DbPass, hostIP, p.Port(), DbName)
+	DSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?multiStatements=true", DbUser, DbPass, hostIP, p.Port(), DbName)
 	time.Sleep(time.Second)
 
 	db := NewDB(DSN)

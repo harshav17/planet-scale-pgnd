@@ -69,6 +69,7 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
 				GroupID:     g.ExpenseGroupID,
 				PaidBy:      u.UserID,
+				SplitTypeID: 1,
 				Amount:      100,
 				Description: "test expense",
 				Timestamp:   time.Now(),
@@ -137,6 +138,7 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
 				GroupID:     g.ExpenseGroupID,
 				PaidBy:      u.UserID,
+				SplitTypeID: 1,
 				Amount:      100,
 				Description: "test expense",
 				Timestamp:   time.Now(),
@@ -198,6 +200,7 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
 				GroupID:     g.ExpenseGroupID,
 				PaidBy:      u.UserID,
+				SplitTypeID: 1,
 				Amount:      100,
 				Description: "test expense",
 				Timestamp:   time.Now(),
