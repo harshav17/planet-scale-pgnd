@@ -36,7 +36,7 @@ func TestExpenseRepo_All(t *testing.T) {
 				PaidBy:      "non-existent-user-id",
 				Amount:      100,
 				Description: "test expense",
-				Timestamp:   time.Time{},
+				Timestamp:   time.Now(),
 				CreatedBy:   "test-user-id",
 				UpdatedBy:   "test-user-id",
 			}

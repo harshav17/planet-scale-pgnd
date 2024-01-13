@@ -125,7 +125,7 @@ func (n *NullTime) Value() (driver.Value, error) {
 	if n == nil || (*time.Time)(n).IsZero() {
 		return nil, nil
 	}
-	return (*time.Time)(n).UTC().Format(time.RFC3339), nil
+	return (*time.Time)(n).UTC().Format("2006-01-02 15:04:05"), nil
 }
 
 // TODO consider moving to a DB util class

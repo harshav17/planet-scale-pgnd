@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS settlements (
     group_id INT, -- References the group_id from the expense_groups table
     paid_by VARCHAR(255),
     paid_to VARCHAR(255),
-    amount DECIMAL(10, 2),
+    amount DECIMAL(19,4),
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (group_id) REFERENCES expense_groups(group_id),
     FOREIGN KEY (paid_by) REFERENCES users(user_id),

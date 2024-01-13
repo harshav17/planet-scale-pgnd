@@ -58,6 +58,7 @@ require (
 )
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.26.4
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/lib/pq v1.10.9 // indirect

@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     group_id INT,
     split_type_id INT NOT NULL,
     paid_by VARCHAR(255),
-    amount DECIMAL(10, 2),
+    amount DECIMAL(19,4),
     description VARCHAR(100),
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(255),  -- References the auth0_id from the users table
