@@ -52,7 +52,7 @@ func (r *expenseRepo) Get(tx *sql.Tx, expenseID int64) (*planetscale.Expense, er
 func (r *expenseRepo) Create(tx *sql.Tx, expense *planetscale.Expense) error {
 	query := `INSERT INTO expenses (group_id, paid_by, amount, description, timestamp, created_by, updated_by, split_type_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
-	result, err := tx.Exec(query, expense.GroupID, expense.PaidBy, expense.Amount, expense.Description, (*NullTime)(&expense.Timestamp), expense.CreatedBy, expense.UpdatedBy, expense.SplitTypeID)
+	result, err := tx.Exec(query, expense.GroupID, expense.PaidBy, expense.Amount, expense.Description, (*NullTime)(&expense.Timestamp), expense.CreatedBy, expense.CreatedBy, expense.SplitTypeID)
 	if err != nil {
 		return err
 	}

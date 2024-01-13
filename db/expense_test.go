@@ -38,7 +38,6 @@ func TestExpenseRepo_All(t *testing.T) {
 				Description: "test expense",
 				Timestamp:   time.Now(),
 				CreatedBy:   "test-user-id",
-				UpdatedBy:   "test-user-id",
 			}
 			// TODO add better error
 			if err := NewExpenseRepo(db.DB).Create(tx, e); err == nil {

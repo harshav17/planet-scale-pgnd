@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	planetscale "github.com/harshav17/planet_scale"
 	utilities "github.com/harshav17/planet_scale/utilites"
 	slogchi "github.com/samber/slog-chi"
@@ -43,6 +44,18 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 
 	logger := utilities.GetLogger()
 	s.router.Use(slogchi.New(logger))
+
+	// CORS
+	s.router.Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"https://*", "http://*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
 
 	// Assuming your CSS file is in a directory named 'css'
 	s.router.Handle("/css/output.css", http.FileServer(http.FS(css)))
@@ -97,6 +110,10 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 			r.Delete("/", controllers.Settlement.HandleDeleteSettlement)
 			r.Get("/", controllers.Settlement.HandleGetSettlement)
 		})
+	})
+
+	s.router.Route("/split_types", func(r chi.Router) {
+		r.Get("/", controllers.SplitType.HandleGetAllSplitTypes)
 	})
 
 	s.server.Handler = s.router

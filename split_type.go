@@ -2,6 +2,7 @@ package planetscale
 
 import (
 	"database/sql"
+	"net/http"
 	"time"
 )
 
@@ -16,5 +17,9 @@ type (
 	SplitTypeRepo interface {
 		Get(tx *sql.Tx, splitTypeID int64) (*SplitType, error)
 		GetAll(tx *sql.Tx) ([]*SplitType, error)
+	}
+
+	SplitTypeController interface {
+		HandleGetAllSplitTypes(w http.ResponseWriter, r *http.Request)
 	}
 )

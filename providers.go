@@ -7,6 +7,7 @@ type (
 		GroupMember  GroupMemberController
 		Expense      ExpenseConroller
 		Settlement   SettlementController
+		SplitType    SplitTypeController
 	}
 	RepoProvider struct {
 		Product      ProductRepo

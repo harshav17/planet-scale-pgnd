@@ -85,6 +85,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	repos.GroupMember = db.NewGroupMemberRepo(m.DB)
 	repos.Expense = db.NewExpenseRepo(m.DB)
 	repos.Settlement = db.NewSettlementRepo(m.DB)
+	repos.SplitType = db.NewSplitTypeRepo(m.DB)
 
 	// controllers
 	controllers := planetscale.ControllerProvider{}
@@ -93,6 +94,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	controllers.GroupMember = http.NewGroupMemberController(&repos, tm)
 	controllers.Expense = http.NewExpenseController(&repos, tm)
 	controllers.Settlement = http.NewSettlementController(&repos, tm)
+	controllers.SplitType = http.NewSplitTypeController(&repos, tm)
 
 	// start the HTTP server.
 	m.HTTPServer = http.NewServer(&controllers)
