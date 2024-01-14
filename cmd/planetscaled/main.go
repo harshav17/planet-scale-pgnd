@@ -11,6 +11,7 @@ import (
 	planetscale "github.com/harshav17/planet_scale"
 	"github.com/harshav17/planet_scale/db"
 	"github.com/harshav17/planet_scale/http"
+	"github.com/harshav17/planet_scale/service"
 	utilities "github.com/harshav17/planet_scale/utilites"
 	"github.com/joho/godotenv"
 )
@@ -87,10 +88,14 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	repos.Settlement = db.NewSettlementRepo(m.DB)
 	repos.SplitType = db.NewSplitTypeRepo(m.DB)
 
+	// services
+	services := planetscale.ServiceProvider{}
+	services.Balance = service.NewBalanceService(&repos, tm)
+
 	// controllers
 	controllers := planetscale.ControllerProvider{}
 	controllers.Product = http.NewProductController(&repos, tm)
-	controllers.ExpenseGroup = http.NewExpenseGroupController(&repos, tm)
+	controllers.ExpenseGroup = http.NewExpenseGroupController(&repos, &services, tm)
 	controllers.GroupMember = http.NewGroupMemberController(&repos, tm)
 	controllers.Expense = http.NewExpenseController(&repos, tm)
 	controllers.Settlement = http.NewSettlementController(&repos, tm)

@@ -136,17 +136,19 @@ func (r *expenseRepo) Find(tx *sql.Tx, filter planetscale.ExpenseFilter) ([]*pla
 
 	query := `
 		SELECT
-			expense_id,
-			group_id,
-			paid_by,
-			amount,
-			description,
-			timestamp,
-			created_at,
-			updated_at,
-			created_by,
-			updated_by
-		FROM expenses
+			e.expense_id,
+			e.group_id,
+			e.paid_by,
+			e.amount,
+			e.description,
+			e.timestamp,
+			e.created_at,
+			e.updated_at,
+			e.created_by,
+			e.updated_by,
+			e.split_type_id,
+			u.name
+		FROM expenses e JOIN users u ON e.paid_by = u.user_id
 		` + where.ToClause()
 	rows, err := tx.Query(query, where.values...)
 	if err != nil {
@@ -156,10 +158,13 @@ func (r *expenseRepo) Find(tx *sql.Tx, filter planetscale.ExpenseFilter) ([]*pla
 	var expenses []*planetscale.Expense
 	for rows.Next() {
 		var expense planetscale.Expense
-		err := rows.Scan(&expense.ExpenseID, &expense.GroupID, &expense.PaidBy, &expense.Amount, &expense.Description, (*NullTime)(&expense.Timestamp), (*NullTime)(&expense.CreatedAt), (*NullTime)(&expense.UpdatedAt), &expense.CreatedBy, &expense.UpdatedBy)
+		var user planetscale.User
+		err := rows.Scan(&expense.ExpenseID, &expense.GroupID, &expense.PaidBy, &expense.Amount, &expense.Description, (*NullTime)(&expense.Timestamp), (*NullTime)(&expense.CreatedAt), (*NullTime)(&expense.UpdatedAt), &expense.CreatedBy, &expense.UpdatedBy, &expense.SplitTypeID, &user.Name)
 		if err != nil {
 			return nil, err
 		}
+		expense.PaidByUser = &user
+
 		expenses = append(expenses, &expense)
 	}
 

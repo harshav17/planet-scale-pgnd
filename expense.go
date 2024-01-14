@@ -19,6 +19,8 @@ type (
 		UpdatedAt   time.Time `json:"updated_at"`
 		CreatedBy   string    `json:"created_by"`
 		UpdatedBy   string    `json:"updated_by"`
+
+		PaidByUser *User `json:"paid_by_user"`
 	}
 
 	ExpenseRepo interface {

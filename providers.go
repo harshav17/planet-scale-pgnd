@@ -17,4 +17,8 @@ type (
 		Settlement   SettlementRepo
 		SplitType    SplitTypeRepo
 	}
+
+	ServiceProvider struct {
+		Balance BalanceService
+	}
 )

@@ -91,6 +91,7 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 			})
 			r.Get("/expenses", controllers.Expense.HandleGetGroupExpenses)
 			r.Get("/settlements", controllers.Settlement.HandleGetGroupSettlements)
+			r.Get("/balances", controllers.ExpenseGroup.HandleGetGroupBalances)
 		})
 	})
 

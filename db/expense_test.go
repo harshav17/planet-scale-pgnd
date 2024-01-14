@@ -195,7 +195,7 @@ func TestExpenseRepo_All(t *testing.T) {
 				SplitTypeID: 1,
 				Amount:      100,
 				Description: "test expense",
-				Timestamp:   time.Now(),
+				Timestamp:   time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC),
 				CreatedBy:   u.UserID,
 				UpdatedBy:   u.UserID,
 			})
@@ -210,6 +210,24 @@ func TestExpenseRepo_All(t *testing.T) {
 				t.Fatalf("expected 1 expense, got %d", len(got))
 			} else if got[0].ExpenseID != e.ExpenseID {
 				t.Fatalf("expected expense id %d, got %d", e.ExpenseID, got[0].ExpenseID)
+			} else if got[0].GroupID != e.GroupID {
+				t.Fatalf("expected group id %d, got %d", e.GroupID, got[0].GroupID)
+			} else if got[0].PaidBy != e.PaidBy {
+				t.Fatalf("expected paid by %s, got %s", e.PaidBy, got[0].PaidBy)
+			} else if got[0].Amount != e.Amount {
+				t.Fatalf("expected amount %f, got %f", e.Amount, got[0].Amount)
+			} else if got[0].Description != e.Description {
+				t.Fatalf("expected description %s, got %s", e.Description, got[0].Description)
+			} else if got[0].CreatedBy != e.CreatedBy {
+				t.Fatalf("expected created by %s, got %s", e.CreatedBy, got[0].CreatedBy)
+			} else if got[0].UpdatedBy != e.UpdatedBy {
+				t.Fatalf("expected updated by %s, got %s", e.UpdatedBy, got[0].UpdatedBy)
+			} else if got[0].SplitTypeID != e.SplitTypeID {
+				t.Fatalf("expected split type id %d, got %d", e.SplitTypeID, got[0].SplitTypeID)
+			} else if got[0].PaidByUser.Name != u.Name {
+				t.Fatalf("expected paid by user name %s, got %s", u.Name, got[0].PaidByUser.Name)
+			} else if got[0].Timestamp != e.Timestamp {
+				t.Fatalf("expected timestamp %s, got %s", e.Timestamp, got[0].Timestamp)
 			}
 		})
 	})

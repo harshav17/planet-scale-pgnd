@@ -97,3 +97,85 @@ func MustCloseDB(tb testing.TB, db *testDB) {
 		tb.Fatal(err)
 	}
 }
+
+// unit test NullTime methodspackage main
+func TestNullTime_Scan(t *testing.T) {
+	t.Run("scan nil", func(t *testing.T) {
+		var nt NullTime
+		err := nt.Scan(nil)
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		if !time.Time(nt).IsZero() {
+			t.Errorf("Expected zero time, got %v", nt)
+		}
+	})
+
+	t.Run("scan byte slice", func(t *testing.T) {
+		var nt NullTime
+		err := nt.Scan([]byte("2022-01-01 00:00:00"))
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		expected := time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
+		if !time.Time(nt).Equal(expected) {
+			t.Errorf("Expected %v, got %v", expected, nt)
+		}
+	})
+
+	t.Run("scan unsupported type", func(t *testing.T) {
+		var nt NullTime
+		err := nt.Scan(123)
+		if err == nil {
+			t.Error("Expected error, got nil")
+		}
+	})
+}
+
+func TestNullTime_Value(t *testing.T) {
+	t.Run("value nil", func(t *testing.T) {
+		var nt *NullTime
+		v, err := nt.Value()
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		if v != nil {
+			t.Errorf("Expected nil, got %v", v)
+		}
+	})
+
+	t.Run("value zero time", func(t *testing.T) {
+		nt := NullTime(time.Time{})
+		v, err := nt.Value()
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		if v != nil {
+			t.Errorf("Expected nil, got %v", v)
+		}
+	})
+
+	t.Run("value non-zero time", func(t *testing.T) {
+		nt := NullTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC))
+		v, err := nt.Value()
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		expected := "2022-01-01 00:00:00"
+		if v != expected {
+			t.Errorf("Expected %v, got %v", expected, v)
+		}
+	})
+
+	t.Run("PST time", func(t *testing.T) {
+		nt := NullTime(time.Date(2022, 1, 1, 0, 0, 0, 0, time.FixedZone("PST", -8*60*60)))
+		v, err := nt.Value()
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		expected := "2022-01-01 08:00:00"
+		if v != expected {
+			t.Errorf("Expected %v, got %v", expected, v)
+		}
+	})
+}

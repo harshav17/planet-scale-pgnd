@@ -11,14 +11,16 @@ import (
 )
 
 type expenseGroupController struct {
-	repos *planetscale.RepoProvider
-	tm    planetscale.TransactionManager
+	repos    *planetscale.RepoProvider
+	services *planetscale.ServiceProvider
+	tm       planetscale.TransactionManager
 }
 
-func NewExpenseGroupController(repos *planetscale.RepoProvider, tm planetscale.TransactionManager) *expenseGroupController {
+func NewExpenseGroupController(repos *planetscale.RepoProvider, services *planetscale.ServiceProvider, tm planetscale.TransactionManager) *expenseGroupController {
 	return &expenseGroupController{
-		repos: repos,
-		tm:    tm,
+		repos:    repos,
+		services: services,
+		tm:       tm,
 	}
 }
 
@@ -221,6 +223,37 @@ func (c *expenseGroupController) HandleGetExpenseGroup(w http.ResponseWriter, r 
 	case "application/json":
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(expenseGroup); err != nil {
+			Error(w, r, err)
+			return
+		}
+	default:
+		Error(w, r, &planetscale.Error{
+			Code:    planetscale.ENOTIMPLEMENTED,
+			Message: "not implemented",
+		})
+		return
+	}
+}
+
+func (c *expenseGroupController) HandleGetGroupBalances(w http.ResponseWriter, r *http.Request) {
+	group32, err := strconv.Atoi(chi.URLParam(r, "groupID"))
+	if err != nil {
+		Error(w, r, err)
+		return
+	}
+	groupID := int64(group32)
+
+	balances, err := c.services.Balance.GetGroupBalances(r.Context(), groupID)
+	if err != nil {
+		Error(w, r, err)
+		return
+	}
+
+	// Format returned data based on HTTP accept header.
+	switch r.Header.Get("Accept") {
+	case "application/json":
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(balances); err != nil {
 			Error(w, r, err)
 			return
 		}

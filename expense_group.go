@@ -30,6 +30,7 @@ type (
 		HandlePatchExpenseGroup(w http.ResponseWriter, r *http.Request)
 		HandleDeleteExpenseGroup(w http.ResponseWriter, r *http.Request)
 		HandleGetExpenseGroup(w http.ResponseWriter, r *http.Request)
+		HandleGetGroupBalances(w http.ResponseWriter, r *http.Request)
 	}
 
 	ExpenseGroupUpdate struct {
