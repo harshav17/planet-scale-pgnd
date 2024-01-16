@@ -10,12 +10,13 @@ type (
 		SplitType    SplitTypeController
 	}
 	RepoProvider struct {
-		Product      ProductRepo
-		ExpenseGroup ExpenseGroupRepo
-		GroupMember  GroupMemberRepo
-		Expense      ExpenseRepo
-		Settlement   SettlementRepo
-		SplitType    SplitTypeRepo
+		Product            ProductRepo
+		ExpenseGroup       ExpenseGroupRepo
+		GroupMember        GroupMemberRepo
+		Expense            ExpenseRepo
+		ExpenseParticipant ExpenseParticipantRepo
+		Settlement         SettlementRepo
+		SplitType          SplitTypeRepo
 	}
 
 	ServiceProvider struct {

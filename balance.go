@@ -6,9 +6,10 @@ import (
 
 type (
 	Balance struct {
-		ExpenseGroupID int64   `json:"group_id"`
-		UserID         string  `json:"user_id"`
-		Amount         float64 `json:"amount"`
+		ExpenseGroupID int64              `json:"group_id"`
+		UserID         string             `json:"user_id"`
+		Amount         float64            `json:"amount"`
+		BalanceItems   map[string]float64 `json:"balance_items"`
 	}
 
 	BalanceService interface {

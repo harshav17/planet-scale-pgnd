@@ -85,6 +85,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	repos.ExpenseGroup = db.NewExpenseGroupRepo(m.DB)
 	repos.GroupMember = db.NewGroupMemberRepo(m.DB)
 	repos.Expense = db.NewExpenseRepo(m.DB)
+	repos.ExpenseParticipant = db.NewExpenseParticipantRepo(m.DB)
 	repos.Settlement = db.NewSettlementRepo(m.DB)
 	repos.SplitType = db.NewSplitTypeRepo(m.DB)
 

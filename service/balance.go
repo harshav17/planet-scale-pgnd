@@ -36,14 +36,11 @@ func (s *balanceService) GetGroupBalances(ctx context.Context, groupID int64) ([
 			return err
 		}
 
-		members, err := s.repos.GroupMember.Find(tx, planetscale.GroupMemberFilter{
-			GroupID: groupID,
-		})
+		balances, err = s.calculateBalances(tx, expenses, settlements)
 		if err != nil {
 			return err
 		}
 
-		balances = calculateBalances(expenses, settlements, members)
 		return nil
 	}
 
@@ -55,14 +52,14 @@ func (s *balanceService) GetGroupBalances(ctx context.Context, groupID int64) ([
 	return balances, nil
 }
 
-func calculateBalances(expenses []*planetscale.Expense, settlements []*planetscale.Settlement, members []*planetscale.GroupMember) []*planetscale.Balance {
+func (s *balanceService) calculateBalances(tx *sql.Tx, expenses []*planetscale.Expense, settlements []*planetscale.Settlement) ([]*planetscale.Balance, error) {
 	// compile a list of balance records
-
 	balances := make(map[string]*planetscale.Balance)
 	for _, expense := range expenses {
 		if _, ok := balances[expense.PaidBy]; !ok {
 			balances[expense.PaidBy] = &planetscale.Balance{
-				UserID: expense.PaidBy,
+				UserID:       expense.PaidBy,
+				BalanceItems: map[string]float64{},
 			}
 		}
 		balances[expense.PaidBy].Amount += expense.Amount
@@ -70,13 +67,27 @@ func calculateBalances(expenses []*planetscale.Expense, settlements []*planetsca
 		if expense.SplitTypeID == 1 { // TODO load from DB
 			// TODO refactor into an extensible split type system
 			// split equally among all members
-			for _, member := range members {
-				if _, ok := balances[member.UserID]; !ok {
-					balances[member.UserID] = &planetscale.Balance{
-						UserID: member.UserID,
+			participants, err := s.repos.ExpenseParticipant.Find(tx, planetscale.ExpenseParticipantFilter{
+				ExpenseID: expense.ExpenseID,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			for _, participant := range participants {
+				if _, ok := balances[participant.UserID]; !ok {
+					balances[participant.UserID] = &planetscale.Balance{
+						UserID:       participant.UserID,
+						BalanceItems: map[string]float64{},
 					}
 				}
-				balances[member.UserID].Amount -= expense.Amount / float64(len(members))
+				balances[participant.UserID].Amount -= expense.Amount / float64(len(participants))
+
+				if participant.UserID == expense.PaidBy {
+					continue
+				}
+				balances[participant.UserID].BalanceItems[expense.PaidBy] -= expense.Amount / float64(len(participants))
+				balances[expense.PaidBy].BalanceItems[participant.UserID] += expense.Amount / float64(len(participants))
 			}
 		}
 	}
@@ -87,8 +98,14 @@ func calculateBalances(expenses []*planetscale.Expense, settlements []*planetsca
 			}
 		}
 		balances[settlement.PaidBy].Amount += settlement.Amount
-	}
-	for _, settlement := range settlements {
+
+		// update paidBy user's balance items
+		if _, ok := balances[settlement.PaidBy].BalanceItems[settlement.PaidTo]; !ok {
+			balances[settlement.PaidBy].BalanceItems[settlement.PaidTo] = 0
+		}
+		balances[settlement.PaidBy].BalanceItems[settlement.PaidTo] += settlement.Amount
+		balances[settlement.PaidTo].BalanceItems[settlement.PaidBy] -= settlement.Amount
+
 		if _, ok := balances[settlement.PaidTo]; !ok {
 			balances[settlement.PaidTo] = &planetscale.Balance{
 				UserID: settlement.PaidTo,
@@ -104,5 +121,5 @@ func calculateBalances(expenses []*planetscale.Expense, settlements []*planetsca
 		balance.Amount = float64(int64(balance.Amount*100)) / 100
 		balanceSlice = append(balanceSlice, balance)
 	}
-	return balanceSlice
+	return balanceSlice, nil
 }

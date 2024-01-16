@@ -10,73 +10,80 @@ import (
 )
 
 type test struct {
-	name        string
-	expenses    []*planetscale.Expense
-	settlements []*planetscale.Settlement
-	members     []*planetscale.GroupMember
-	expected    []*planetscale.Balance
+	name         string
+	expenses     []*planetscale.Expense
+	settlements  []*planetscale.Settlement
+	participants []*planetscale.ExpenseParticipant
+	expected     []*planetscale.Balance
 }
 
-func TestBalanceService_GetGroupBalances(t *testing.T) {
+func TestBalanceService_GetGroupBalances_TwoParticipants(t *testing.T) {
+	var twoExpenseParticipants = []*planetscale.ExpenseParticipant{
+		{
+			ExpenseID: 1,
+			UserID:    "test-user-id",
+			Note:      "test expense",
+		},
+		{
+			ExpenseID: 1,
+			UserID:    "test-user-id-2",
+			Note:      "test expense",
+		},
+		{
+			ExpenseID: 2,
+			UserID:    "test-user-id",
+			Note:      "test expense",
+		},
+		{
+			ExpenseID: 2,
+			UserID:    "test-user-id-2",
+			Note:      "test expense",
+		},
+	}
+
+	var twoExpenses = []*planetscale.Expense{
+		{
+			ExpenseID:   1,
+			GroupID:     1,
+			PaidBy:      "test-user-id",
+			Amount:      200,
+			SplitTypeID: 1,
+		},
+		{
+			ExpenseID:   2,
+			GroupID:     1,
+			PaidBy:      "test-user-id-2",
+			Amount:      100,
+			SplitTypeID: 1,
+		},
+	}
+
 	tests := []test{
 		{
-			name: "1 owes 2",
-			expenses: []*planetscale.Expense{
-				{
-					ExpenseID:   1,
-					GroupID:     1,
-					PaidBy:      "test-user-id",
-					Amount:      200,
-					SplitTypeID: 1,
-				},
-				{
-					ExpenseID:   2,
-					GroupID:     1,
-					PaidBy:      "test-user-id-2",
-					Amount:      100,
-					SplitTypeID: 1,
-				},
-			},
-			settlements: []*planetscale.Settlement{},
-			members: []*planetscale.GroupMember{
-				{
-					GroupID: 1,
-					UserID:  "test-user-id",
-				},
-				{
-					GroupID: 1,
-					UserID:  "test-user-id-2",
-				},
-			},
+			name:         "1 owes 2",
+			expenses:     twoExpenses,
+			settlements:  []*planetscale.Settlement{},
+			participants: twoExpenseParticipants,
 			expected: []*planetscale.Balance{
 				{
 					UserID: "test-user-id",
 					Amount: 50,
+					BalanceItems: map[string]float64{
+						"test-user-id-2": 50,
+					},
 				},
 				{
 					UserID: "test-user-id-2",
 					Amount: -50,
+					BalanceItems: map[string]float64{
+						"test-user-id": -50,
+					},
 				},
 			},
 		},
 		{
-			name: "balance settled",
-			expenses: []*planetscale.Expense{
-				{
-					ExpenseID:   1,
-					GroupID:     1,
-					PaidBy:      "test-user-id",
-					Amount:      200,
-					SplitTypeID: 1,
-				},
-				{
-					ExpenseID:   2,
-					GroupID:     1,
-					PaidBy:      "test-user-id-2",
-					Amount:      100,
-					SplitTypeID: 1,
-				},
-			},
+			name:     "balance settled",
+			expenses: twoExpenses,
 			settlements: []*planetscale.Settlement{
 				{
 					SettlementID: 1,
@@ -86,45 +93,27 @@ func TestBalanceService_GetGroupBalances(t *testing.T) {
 					Amount:       50,
 				},
 			},
-			members: []*planetscale.GroupMember{
-				{
-					GroupID: 1,
-					UserID:  "test-user-id",
-				},
-				{
-					GroupID: 1,
-					UserID:  "test-user-id-2",
-				},
-			},
+			participants: twoExpenseParticipants,
 			expected: []*planetscale.Balance{
 				{
 					UserID: "test-user-id",
 					Amount: 0,
+					BalanceItems: map[string]float64{
+						"test-user-id-2": 0,
+					},
 				},
 				{
 					UserID: "test-user-id-2",
 					Amount: 0,
+					BalanceItems: map[string]float64{
+						"test-user-id": 0,
+					},
 				},
 			},
 		},
 		{
-			name: "balance settled with multiple settlements",
-			expenses: []*planetscale.Expense{
-				{
-					ExpenseID:   1,
-					GroupID:     1,
-					PaidBy:      "test-user-id",
-					Amount:      200,
-					SplitTypeID: 1,
-				},
-				{
-					ExpenseID:   2,
-					GroupID:     1,
-					PaidBy:      "test-user-id-2",
-					Amount:      100,
-					SplitTypeID: 1,
-				},
-			},
+			name:     "balance settled with multiple settlements",
+			expenses: twoExpenses,
 			settlements: []*planetscale.Settlement{
 				{
 					SettlementID: 1,
@@ -141,37 +130,122 @@ func TestBalanceService_GetGroupBalances(t *testing.T) {
 					Amount:       25,
 				},
 			},
-			members: []*planetscale.GroupMember{
-				{
-					GroupID: 1,
-					UserID:  "test-user-id",
-				},
-				{
-					GroupID: 1,
-					UserID:  "test-user-id-2",
-				},
-			},
+			participants: twoExpenseParticipants,
 			expected: []*planetscale.Balance{
 				{
 					UserID: "test-user-id",
 					Amount: 0,
+					BalanceItems: map[string]float64{
+						"test-user-id-2": 0,
+					},
 				},
 				{
 					UserID: "test-user-id-2",
 					Amount: 0,
+					BalanceItems: map[string]float64{
+						"test-user-id": 0,
+					},
 				},
 			},
 		},
 	}
 
-	// TODO add tons more tests
-
 	for _, test := range tests {
-		testGetBalancesHelper(t, test.expenses, test.settlements, test.members, test.expected)
+		t.Run(test.name, func(t *testing.T) {
+			testGetBalancesHelper(t, test.expenses, test.settlements, test.participants, test.expected)
+		})
 	}
 }
 
-func testGetBalancesHelper(t *testing.T, expenses []*planetscale.Expense, settlements []*planetscale.Settlement, members []*planetscale.GroupMember, expected []*planetscale.Balance) {
+func TestBalanceService_GetGroupBalances_ThreeParticipants(t *testing.T) {
+	var threeExpenseParticipants = []*planetscale.ExpenseParticipant{
+		{
+			ExpenseID: 1,
+			UserID:    "test-user-id",
+			Note:      "test expense",
+		},
+		{
+			ExpenseID: 1,
+			UserID:    "test-user-id-2",
+			Note:      "test expense",
+		},
+		{
+			ExpenseID: 1,
+			UserID:    "test-user-id-3",
+			Note:      "test expense",
+		},
+		{
+			ExpenseID: 2,
+			UserID:    "test-user-id-3",
+			Note:      "test expense",
+		},
+		{
+			ExpenseID: 2,
+			UserID:    "test-user-id-2",
+			Note:      "test expense",
+		},
+	}
+
+	var threeExpenses = []*planetscale.Expense{
+		{
+			ExpenseID:   1,
+			GroupID:     1,
+			PaidBy:      "test-user-id",
+			Amount:      300,
+			SplitTypeID: 1,
+		},
+		{
+			ExpenseID:   2,
+			GroupID:     1,
+			PaidBy:      "test-user-id-2",
+			Amount:      200,
+			SplitTypeID: 1,
+		},
+	}
+
+	tests := []test{
+		{
+			name:         "1 owes 2 and 3",
+			expenses:     threeExpenses,
+			settlements:  []*planetscale.Settlement{},
+			participants: threeExpenseParticipants,
+			expected: []*planetscale.Balance{
+				{
+					UserID: "test-user-id",
+					Amount: 200,
+					BalanceItems: map[string]float64{
+						"test-user-id-2": 100,
+						"test-user-id-3": 100,
+					},
+				},
+				{
+					UserID: "test-user-id-2",
+					Amount: 0,
+					BalanceItems: map[string]float64{
+						"test-user-id":   -100,
+						"test-user-id-3": 100,
+					},
+				},
+				{
+					UserID: "test-user-id-3",
+					Amount: -200,
+					BalanceItems: map[string]float64{
+						"test-user-id":   -100,
+						"test-user-id-2": -100,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			testGetBalancesHelper(t, test.expenses, test.settlements, test.participants, test.expected)
+		})
+	}
+}
+
+func testGetBalancesHelper(t *testing.T, expenses []*planetscale.Expense, settlements []*planetscale.Settlement, participants []*planetscale.ExpenseParticipant, expected []*planetscale.Balance) {
 	tm := db_mock.TransactionManager{}
 	tm.ExecuteInTxFn = func(ctx context.Context, fn func(*sql.Tx) error) error {
 		return fn(nil)
@@ -191,9 +265,9 @@ func testGetBalancesHelper(t *testing.T, expenses []*planetscale.Expense, settle
 		},
 	}
 
-	balanceService.repos.GroupMember = &db_mock.GroupMemberRepo{
-		FindFn: func(tx *sql.Tx, filter planetscale.GroupMemberFilter) ([]*planetscale.GroupMember, error) {
-			return members, nil
+	balanceService.repos.ExpenseParticipant = &db_mock.ExpenseParticipantRepo{
+		FindFn: func(tx *sql.Tx, filter planetscale.ExpenseParticipantFilter) ([]*planetscale.ExpenseParticipant, error) {
+			return filterParitipantsByExpenseID(participants, filter.ExpenseID), nil
 		},
 	}
 
@@ -212,6 +286,16 @@ func testGetBalancesHelper(t *testing.T, expenses []*planetscale.Expense, settle
 			t.Errorf("%+v", b)
 		}
 	}
+}
+
+func filterParitipantsByExpenseID(participants []*planetscale.ExpenseParticipant, expenseID int64) []*planetscale.ExpenseParticipant {
+	var filtered []*planetscale.ExpenseParticipant
+	for _, participant := range participants {
+		if participant.ExpenseID == expenseID {
+			filtered = append(filtered, participant)
+		}
+	}
+	return filtered
 }
 
 func compareBalances(expected []*planetscale.Balance, got []*planetscale.Balance) bool {
@@ -236,6 +320,26 @@ func compareBalances(expected []*planetscale.Balance, got []*planetscale.Balance
 		}
 		if expectedBalance.Amount != gotBalance.Amount {
 			return false
+		}
+	}
+
+	// validate balance items
+	for userID, expectedBalance := range expectedMap {
+		gotBalance, ok := gotMap[userID]
+		if !ok {
+			return false
+		}
+		if len(expectedBalance.BalanceItems) != len(gotBalance.BalanceItems) {
+			return false
+		}
+		for paidToUserID, expectedAmount := range expectedBalance.BalanceItems {
+			gotAmount, ok := gotBalance.BalanceItems[paidToUserID]
+			if !ok {
+				return false
+			}
+			if expectedAmount != gotAmount {
+				return false
+			}
 		}
 	}
 

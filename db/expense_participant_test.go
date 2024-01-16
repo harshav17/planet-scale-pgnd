@@ -225,4 +225,57 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("Find Tests", func(t *testing.T) {
+		t.Run("successful find", func(t *testing.T) {
+			tx, err := db.db.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback()
+
+			u := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id",
+				Name:   "test user",
+				Email:  "",
+			})
+			g := MustCreateExpenseGroup(t, tx, db.DB, &planetscale.ExpenseGroup{
+				GroupName: "test group",
+				CreateBy:  u.UserID,
+			})
+			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
+				GroupID:     g.ExpenseGroupID,
+				PaidBy:      u.UserID,
+				SplitTypeID: 1,
+				Amount:      100,
+				Description: "test expense",
+				Timestamp:   time.Now(),
+				CreatedBy:   u.UserID,
+				UpdatedBy:   u.UserID,
+			})
+			ep := MustCreateExpenseParticipant(t, tx, db.DB, &planetscale.ExpenseParticipant{
+				ExpenseID:       e.ExpenseID,
+				UserID:          u.UserID,
+				AmountOwed:      100,
+				SharePercentage: 100,
+				SplitMethod:     "EQUAL",
+				Note:            "test expense",
+			})
+
+			epRepo := NewExpenseParticipantRepo(db.DB)
+			got, err := epRepo.Find(tx, planetscale.ExpenseParticipantFilter{ExpenseID: e.ExpenseID})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(got) != 1 {
+				t.Fatalf("expected 1 expense participant, got %d", len(got))
+			}
+			if got[0].ExpenseID != ep.ExpenseID {
+				t.Fatalf("expected expense id %d, got %d", ep.ExpenseID, got[0].ExpenseID)
+			}
+			if got[0].UserID != ep.UserID {
+				t.Fatalf("expected user id %s, got %s", ep.UserID, got[0].UserID)
+			}
+		})
+	})
 }

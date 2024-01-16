@@ -133,3 +133,39 @@ func (r *expenseParticipantRepo) Update(tx *sql.Tx, expenseID int64, userID stri
 
 	return r.Get(tx, expenseID, userID)
 }
+
+func (r *expenseParticipantRepo) Find(tx *sql.Tx, filter planetscale.ExpenseParticipantFilter) ([]*planetscale.ExpenseParticipant, error) {
+	where := &findWhereClause{}
+	if filter.ExpenseID != 0 {
+		where.Add("expense_id", filter.ExpenseID)
+	}
+
+	query := `
+		SELECT
+			expense_id,
+			user_id,
+			amount_owed,
+			share_percentage,
+			split_method,
+			note
+		FROM expense_participants
+	` + where.ToClause()
+
+	rows, err := tx.Query(query, where.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var participants []*planetscale.ExpenseParticipant
+	for rows.Next() {
+		var participant planetscale.ExpenseParticipant
+		err := rows.Scan(&participant.ExpenseID, &participant.UserID, &participant.AmountOwed, &participant.SharePercentage, &participant.SplitMethod, &participant.Note)
+		if err != nil {
+			return nil, err
+		}
+		participants = append(participants, &participant)
+	}
+	slog.Info("found expense participants", slog.Int("count", len(participants)))
+
+	return participants, nil
+}
