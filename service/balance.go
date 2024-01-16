@@ -65,30 +65,9 @@ func (s *balanceService) calculateBalances(tx *sql.Tx, expenses []*planetscale.E
 		balances[expense.PaidBy].Amount += expense.Amount
 
 		if expense.SplitTypeID == 1 { // TODO load from DB
-			// TODO refactor into an extensible split type system
-			// split equally among all members
-			participants, err := s.repos.ExpenseParticipant.Find(tx, planetscale.ExpenseParticipantFilter{
-				ExpenseID: expense.ExpenseID,
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			for _, participant := range participants {
-				if _, ok := balances[participant.UserID]; !ok {
-					balances[participant.UserID] = &planetscale.Balance{
-						UserID:       participant.UserID,
-						BalanceItems: map[string]float64{},
-					}
-				}
-				balances[participant.UserID].Amount -= expense.Amount / float64(len(participants))
-
-				if participant.UserID == expense.PaidBy {
-					continue
-				}
-				balances[participant.UserID].BalanceItems[expense.PaidBy] -= expense.Amount / float64(len(participants))
-				balances[expense.PaidBy].BalanceItems[participant.UserID] += expense.Amount / float64(len(participants))
-			}
+			s.handleEqualSplitType(tx, balances, expense)
+		} else if expense.SplitTypeID == 3 {
+			s.handleItemizedSplitType(tx, balances, expense)
 		}
 	}
 	for _, settlement := range settlements {
@@ -122,4 +101,34 @@ func (s *balanceService) calculateBalances(tx *sql.Tx, expenses []*planetscale.E
 		balanceSlice = append(balanceSlice, balance)
 	}
 	return balanceSlice, nil
+}
+
+func (s *balanceService) handleEqualSplitType(tx *sql.Tx, balances map[string]*planetscale.Balance, expense *planetscale.Expense) error {
+	participants, err := s.repos.ExpenseParticipant.Find(tx, planetscale.ExpenseParticipantFilter{
+		ExpenseID: expense.ExpenseID,
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, participant := range participants {
+		if _, ok := balances[participant.UserID]; !ok {
+			balances[participant.UserID] = &planetscale.Balance{
+				UserID:       participant.UserID,
+				BalanceItems: map[string]float64{},
+			}
+		}
+		balances[participant.UserID].Amount -= expense.Amount / float64(len(participants))
+
+		if participant.UserID == expense.PaidBy {
+			continue
+		}
+		balances[participant.UserID].BalanceItems[expense.PaidBy] -= expense.Amount / float64(len(participants))
+		balances[expense.PaidBy].BalanceItems[participant.UserID] += expense.Amount / float64(len(participants))
+	}
+	return nil
+}
+
+func (s *balanceService) handleItemizedSplitType(tx *sql.Tx, balances map[string]*planetscale.Balance, expense *planetscale.Expense) error {
+	return nil
 }
