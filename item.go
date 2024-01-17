@@ -16,6 +16,11 @@ type (
 		Create(tx *sql.Tx, item *Item) error
 		Update(tx *sql.Tx, itemID int64, item *ItemUpdate) (*Item, error)
 		Delete(tx *sql.Tx, itemID int64) error
+		Find(tx *sql.Tx, filter ItemFilter) ([]*Item, error)
+	}
+
+	ItemFilter struct {
+		ExpenseID int64 `json:"expense_id"`
 	}
 
 	ItemUpdate struct {

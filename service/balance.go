@@ -130,5 +130,40 @@ func (s *balanceService) handleEqualSplitType(tx *sql.Tx, balances map[string]*p
 }
 
 func (s *balanceService) handleItemizedSplitType(tx *sql.Tx, balances map[string]*planetscale.Balance, expense *planetscale.Expense) error {
+	items, err := s.repos.Item.Find(tx, planetscale.ItemFilter{
+		ExpenseID: expense.ExpenseID,
+	})
+	if err != nil {
+		return err
+	}
+
+	// TODO what about taxes?
+
+	for _, item := range items {
+		itemSplits, err := s.repos.ItemSplit.Find(tx, planetscale.ItemSplitFilter{
+			ItemID: item.ItemID,
+		})
+		if err != nil {
+			return err
+		}
+		amount := item.Price / float64(len(itemSplits))
+
+		for _, itemSplit := range itemSplits {
+			if _, ok := balances[itemSplit.UserID]; !ok {
+				balances[itemSplit.UserID] = &planetscale.Balance{
+					UserID:       itemSplit.UserID,
+					BalanceItems: map[string]float64{},
+				}
+			}
+			balances[itemSplit.UserID].Amount -= amount
+
+			if itemSplit.UserID == expense.PaidBy {
+				continue
+			}
+			balances[itemSplit.UserID].BalanceItems[expense.PaidBy] -= amount
+			balances[expense.PaidBy].BalanceItems[itemSplit.UserID] += amount
+		}
+	}
+
 	return nil
 }

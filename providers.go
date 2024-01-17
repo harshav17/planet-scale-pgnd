@@ -17,6 +17,8 @@ type (
 		ExpenseParticipant ExpenseParticipantRepo
 		Settlement         SettlementRepo
 		SplitType          SplitTypeRepo
+		Item               ItemRepo
+		ItemSplit          ItemSplitRepo
 	}
 
 	ServiceProvider struct {

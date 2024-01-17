@@ -88,6 +88,8 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	repos.ExpenseParticipant = db.NewExpenseParticipantRepo(m.DB)
 	repos.Settlement = db.NewSettlementRepo(m.DB)
 	repos.SplitType = db.NewSplitTypeRepo(m.DB)
+	repos.Item = db.NewItemRepo(m.DB)
+	repos.ItemSplit = db.NewItemSplitRepo(m.DB)
 
 	// services
 	services := planetscale.ServiceProvider{}

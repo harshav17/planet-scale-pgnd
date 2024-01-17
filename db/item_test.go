@@ -199,4 +199,61 @@ func TestItemRepo_All(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("Find Tests", func(t *testing.T) {
+		t.Run("successful find", func(t *testing.T) {
+			tx, err := db.db.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback()
+
+			u := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id",
+				Name:   "test user",
+				Email:  "",
+			})
+			g := MustCreateExpenseGroup(t, tx, db.DB, &planetscale.ExpenseGroup{
+				GroupName: "test group",
+				CreateBy:  u.UserID,
+			})
+			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
+				GroupID:     g.ExpenseGroupID,
+				PaidBy:      u.UserID,
+				SplitTypeID: 1,
+				Amount:      100,
+				Description: "test expense",
+				Timestamp:   time.Now(),
+				CreatedBy:   u.UserID,
+				UpdatedBy:   u.UserID,
+			})
+			i := MustCreateItem(t, tx, db.DB, &planetscale.Item{
+				Name:      "test item",
+				Price:     100,
+				Quantity:  1,
+				ExpenseID: e.ExpenseID,
+			})
+
+			items, err := NewItemRepo(db.DB).Find(tx, planetscale.ItemFilter{
+				ExpenseID: e.ExpenseID,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(items) != 1 {
+				t.Fatalf("expected 1 item, got %d", len(items))
+			}
+			if items[0].ItemID != i.ItemID {
+				t.Errorf("expected item id %d, got %d", i.ItemID, items[0].ItemID)
+			} else if items[0].Name != i.Name {
+				t.Errorf("expected item name %s, got %s", i.Name, items[0].Name)
+			} else if items[0].Price != i.Price {
+				t.Errorf("expected item price %f, got %f", i.Price, items[0].Price)
+			} else if items[0].Quantity != i.Quantity {
+				t.Errorf("expected item quantity %d, got %d", i.Quantity, items[0].Quantity)
+			} else if items[0].ExpenseID != i.ExpenseID {
+				t.Errorf("expected item expense id %d, got %d", i.ExpenseID, items[0].ExpenseID)
+			}
+		})
+	})
 }

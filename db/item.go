@@ -107,3 +107,38 @@ func (r *itemRepo) Delete(tx *sql.Tx, itemID int64) error {
 	}
 	return nil
 }
+
+func (r *itemRepo) Find(tx *sql.Tx, filter planetscale.ItemFilter) ([]*planetscale.Item, error) {
+	where := &findWhereClause{}
+
+	if filter.ExpenseID != 0 {
+		where.Add("expense_id", filter.ExpenseID)
+	}
+
+	query := `
+		SELECT
+			item_id,
+			name,
+			price,
+			quantity,
+			expense_id
+		FROM
+			items
+	` + where.ToClause()
+
+	rows, err := tx.Query(query, where.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []*planetscale.Item
+	for rows.Next() {
+		var item planetscale.Item
+		err := rows.Scan(&item.ItemID, &item.Name, &item.Price, &item.Quantity, &item.ExpenseID)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, &item)
+	}
+	return items, nil
+}
