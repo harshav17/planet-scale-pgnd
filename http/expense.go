@@ -11,14 +11,16 @@ import (
 )
 
 type expenseController struct {
-	repos *planetscale.RepoProvider
-	tm    planetscale.TransactionManager
+	repos    *planetscale.RepoProvider
+	services *planetscale.ServiceProvider
+	tm       planetscale.TransactionManager
 }
 
-func NewExpenseController(repos *planetscale.RepoProvider, tm planetscale.TransactionManager) *expenseController {
+func NewExpenseController(repos *planetscale.RepoProvider, services *planetscale.ServiceProvider, tm planetscale.TransactionManager) *expenseController {
 	return &expenseController{
-		repos: repos,
-		tm:    tm,
+		repos:    repos,
+		services: services,
+		tm:       tm,
 	}
 }
 
@@ -120,15 +122,7 @@ func (c *expenseController) HandlePostExpense(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	createExpenseFunc := func(tx *sql.Tx) error {
-		err = c.repos.Expense.Create(tx, &expense)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	err = c.tm.ExecuteInTx(r.Context(), createExpenseFunc)
+	err = c.services.Expense.CreateExpense(r.Context(), &expense)
 	if err != nil {
 		Error(w, r, err)
 		return

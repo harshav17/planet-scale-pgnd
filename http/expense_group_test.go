@@ -11,6 +11,7 @@ import (
 
 	planetscale "github.com/harshav17/planet_scale"
 	db_mock "github.com/harshav17/planet_scale/mock/db"
+	service_mock "github.com/harshav17/planet_scale/mock/service"
 )
 
 func TestHandleExpenseGroups_All(t *testing.T) {
@@ -317,6 +318,50 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 			}
 			if got.ExpenseGroupID != 1 {
 				t.Errorf("expected group id 1, got %d", got.ExpenseGroupID)
+			}
+		})
+	})
+
+	t.Run("GET /groups/:id/balances", func(t *testing.T) {
+		t.Run("successful get", func(t *testing.T) {
+			balances := []*planetscale.Balance{
+				{
+					UserID: "test-user-id",
+					Amount: 100,
+				},
+			}
+
+			server.services.Balance = &service_mock.BalanceService{
+				GetGroupBalancesFn: func(groupID int64) ([]*planetscale.Balance, error) {
+					return balances, nil
+				},
+			}
+
+			req, err := http.NewRequest("GET", "/groups/1/balances", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusOK {
+				t.Errorf("expected status code %d, got %d", http.StatusOK, status)
+			}
+
+			var got []planetscale.Balance
+			err = json.Unmarshal(rr.Body.Bytes(), &got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(got) != 1 {
+				t.Errorf("expected 1 balance, got %d", len(got))
+			} else if got[0].UserID != "test-user-id" {
+				t.Errorf("expected user id test-user-id, got %s", got[0].UserID)
+			} else if got[0].Amount != 100 {
+				t.Errorf("expected amount 100, got %f", got[0].Amount)
 			}
 		})
 	})

@@ -1,6 +1,7 @@
 package planetscale
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"time"
@@ -20,7 +21,8 @@ type (
 		CreatedBy   string    `json:"created_by"`
 		UpdatedBy   string    `json:"updated_by"`
 
-		PaidByUser *User `json:"paid_by_user"`
+		PaidByUser   *User                 `json:"paid_by_user"`
+		Participants []*ExpenseParticipant `json:"participants"`
 	}
 
 	ExpenseRepo interface {
@@ -50,5 +52,9 @@ type (
 		HandleDeleteExpense(w http.ResponseWriter, r *http.Request)
 		HandlePatchExpense(w http.ResponseWriter, r *http.Request)
 		HandleGetGroupExpenses(w http.ResponseWriter, r *http.Request)
+	}
+
+	ExpenseService interface {
+		CreateExpense(ctx context.Context, expense *Expense) error
 	}
 )

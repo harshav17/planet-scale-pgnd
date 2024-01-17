@@ -11,7 +11,8 @@ import (
 
 type TestServer struct {
 	*Server
-	repos *planetscale.RepoProvider
+	repos    *planetscale.RepoProvider
+	services *planetscale.ServiceProvider
 }
 
 func MustOpenServer(tb testing.TB) TestServer {
@@ -30,7 +31,7 @@ func MustOpenServer(tb testing.TB) TestServer {
 	controllers.Product = NewProductController(&repos, &tm)
 	controllers.ExpenseGroup = NewExpenseGroupController(&repos, &services, &tm)
 	controllers.GroupMember = NewGroupMemberController(&repos, &tm)
-	controllers.Expense = NewExpenseController(&repos, &tm)
+	controllers.Expense = NewExpenseController(&repos, &services, &tm)
 	controllers.Settlement = NewSettlementController(&repos, &tm)
 	controllers.SplitType = NewSplitTypeController(&repos, &tm)
 
@@ -42,8 +43,9 @@ func MustOpenServer(tb testing.TB) TestServer {
 	}
 
 	return TestServer{
-		Server: server,
-		repos:  &repos,
+		Server:   server,
+		repos:    &repos,
+		services: &services,
 	}
 }
 

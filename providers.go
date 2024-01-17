@@ -23,5 +23,6 @@ type (
 
 	ServiceProvider struct {
 		Balance BalanceService
+		Expense ExpenseService
 	}
 )

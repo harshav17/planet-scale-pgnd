@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	planetscale "github.com/harshav17/planet_scale"
 	db_mock "github.com/harshav17/planet_scale/mock/db"
+	service_mock "github.com/harshav17/planet_scale/mock/service"
 )
 
 func TestHandleExpense_All(t *testing.T) {
@@ -67,8 +69,9 @@ func TestHandleExpense_All(t *testing.T) {
 
 	t.Run("POST /expenses", func(t *testing.T) {
 		t.Run("successful post", func(t *testing.T) {
-			server.repos.Expense = &db_mock.ExpenseRepo{
-				CreateFn: func(tx *sql.Tx, expense *planetscale.Expense) error {
+			server.services.Expense = &service_mock.ExpenseService{
+				CreateExpenseFn: func(ctx context.Context, expense *planetscale.Expense) error {
+					expense.ExpenseID = 1
 					return nil
 				},
 			}
@@ -81,6 +84,7 @@ func TestHandleExpense_All(t *testing.T) {
 				Timestamp:   time.Now(),
 				CreatedBy:   "test-user-id",
 				UpdatedBy:   "test-user-id",
+				SplitTypeID: 1,
 			}
 
 			body, err := json.Marshal(expense)

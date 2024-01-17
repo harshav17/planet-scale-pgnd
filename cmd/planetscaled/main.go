@@ -94,13 +94,14 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	// services
 	services := planetscale.ServiceProvider{}
 	services.Balance = service.NewBalanceService(&repos, tm)
+	services.Expense = service.NewExpenseService(&repos, tm)
 
 	// controllers
 	controllers := planetscale.ControllerProvider{}
 	controllers.Product = http.NewProductController(&repos, tm)
 	controllers.ExpenseGroup = http.NewExpenseGroupController(&repos, &services, tm)
 	controllers.GroupMember = http.NewGroupMemberController(&repos, tm)
-	controllers.Expense = http.NewExpenseController(&repos, tm)
+	controllers.Expense = http.NewExpenseController(&repos, &services, tm)
 	controllers.Settlement = http.NewSettlementController(&repos, tm)
 	controllers.SplitType = http.NewSplitTypeController(&repos, tm)
 
