@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	planetscale "github.com/harshav17/planet_scale"
+	"github.com/harshav17/planet_scale/middleware"
 	utilities "github.com/harshav17/planet_scale/utilites"
 	slogchi "github.com/samber/slog-chi"
 )
@@ -70,6 +71,7 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 	})
 
 	s.router.Route("/products", func(r chi.Router) {
+		r.Use(middleware.EnsureValidToken())
 		r.Route("/{productID}", func(r chi.Router) {
 			r.Get("/", controllers.Product.HandleGetProduct)
 		})
