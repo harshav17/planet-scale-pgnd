@@ -90,6 +90,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	repos.SplitType = db.NewSplitTypeRepo(m.DB)
 	repos.Item = db.NewItemRepo(m.DB)
 	repos.ItemSplit = db.NewItemSplitRepo(m.DB)
+	repos.User = db.NewUserRepo(m.DB)
 
 	// services
 	services := planetscale.ServiceProvider{}
@@ -105,8 +106,11 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	controllers.Settlement = http.NewSettlementController(&repos, tm)
 	controllers.SplitType = http.NewSplitTypeController(&repos, tm)
 
+	// middleware
+	middleware := http.NewMiddleware(&repos, tm)
+
 	// start the HTTP server.
-	m.HTTPServer = http.NewServer(&controllers)
+	m.HTTPServer = http.NewServer(&controllers, middleware)
 	if err := m.HTTPServer.Open(); err != nil {
 		return err
 	}

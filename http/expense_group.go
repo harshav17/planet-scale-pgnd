@@ -25,10 +25,16 @@ func NewExpenseGroupController(repos *planetscale.RepoProvider, services *planet
 }
 
 func (c *expenseGroupController) HandleGetExpenseGroups(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	var expenseGroups []*planetscale.ExpenseGroup
 	var err error
 	getExpenseGroupFunc := func(tx *sql.Tx) error {
-		expenseGroups, err = c.repos.ExpenseGroup.ListAllForUser(tx, "test_user_id" /* TODO remove user id */)
+		expenseGroups, err = c.repos.ExpenseGroup.ListAllForUser(tx, user.UserID)
 		if err != nil {
 			return err
 		}
@@ -67,12 +73,22 @@ type findExpenseGroupsResponse struct {
 }
 
 func (c *expenseGroupController) HandlePostExpenseGroup(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	var expenseGroup planetscale.ExpenseGroup
 	err := ReceiveJson(w, r, &expenseGroup)
 	if err != nil {
 		Error(w, r, err)
 		return
 	}
+
+	// Set the user ID of the expense group to the user ID of the user who created it.
+	expenseGroup.CreateBy = user.UserID
+	expenseGroup.UpdatedBy = user.UserID
 
 	createExpenseGroupFunc := func(tx *sql.Tx) error {
 		err = c.repos.ExpenseGroup.Create(tx, &expenseGroup)

@@ -71,4 +71,5 @@ require (
 	github.com/testcontainers/testcontainers-go v0.26.0
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.26.0
 	go.uber.org/atomic v1.7.0 // indirect
+	gopkg.in/square/go-jose.v2 v2.6.0
 )

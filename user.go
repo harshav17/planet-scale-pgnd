@@ -16,5 +16,6 @@ type (
 	UserRepo interface {
 		Get(tx *sql.Tx, userID string) (*User, error)
 		Create(tx *sql.Tx, user *User) error
+		Upsert(tx *sql.Tx, user *User) error
 	}
 )

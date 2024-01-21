@@ -6,7 +6,7 @@ curl --request GET \
 curl --request GET \
   --url http://localhost:8080/products/1 \
   --header 'accept: application/json' \
-  --header 'authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjRfMEl2RlNQVG5OdXdZZkttbFltNSJ9.eyJpc3MiOiJodHRwczovL3NxdWFiYmxlLWRldi51cy5hdXRoMC5jb20vIiwic3ViIjoiNkdaMDdXeUZ0NkpkZkJHSTZnRjVUUVIzYk0ycElDU2NAY2xpZW50cyIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsImlhdCI6MTcwNTYzNjU0MywiZXhwIjoxNzA1NzIyOTQzLCJhenAiOiI2R1owN1d5RnQ2SmRmQkdJNmdGNVRRUjNiTTJwSUNTYyIsImd0eSI6ImNsaWVudC1jcmVkZW50aWFscyJ9.LLuNUl0W0uRXiJ8X52AxHkn801k7dd2OisBuBOfLKzbSnMiRMRIAFxFXAhht3pXjDSEOmA7VzTb6MML-lXgLe9zQIv17kHzMUQv_RAfmqljcwqF28riJAUU1Tlf7eprweRFFAGFL4egz8BAaGt4qFB8tfvHXr3plVjGE-jquohZmEBbRvQMCdDyb7ok0lURXzak6cd5qi5MOquxq1YjG7tOXGlMfH8fHseyevbFHt41PjbASDdLWoLxgVxc9LcssMVyUWQPfjbV0LunDQgMYbZ4B3YxPBt334z40Kxr_tzRb_AWMQB4g0rwVmFHvbj_Uk_HOEX-ogWLjQ0GMBBTZsg'
+  --header 'authorization: Bearer <>'
 
 ### product create
 curl --request POST \
@@ -27,7 +27,7 @@ curl --request POST \
   --url http://localhost:8080/groups \
   --header 'content-type: application/json' \
   --header 'accept: application/json' \
+  --header 'Authorization: Bearer <>'
   --data '{
-    "group_name": "group 1",
-    "created_by": "test_user_id"
+    "group_name": "group 1"
   }'

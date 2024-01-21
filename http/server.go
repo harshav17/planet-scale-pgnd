@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	planetscale "github.com/harshav17/planet_scale"
-	"github.com/harshav17/planet_scale/middleware"
 	utilities "github.com/harshav17/planet_scale/utilites"
 	slogchi "github.com/samber/slog-chi"
 )
@@ -32,15 +31,17 @@ var (
 const ShutdownTimeout = 1 * time.Second
 
 type Server struct {
-	ln     net.Listener
-	server *http.Server
-	router chi.Router
+	ln         net.Listener
+	server     *http.Server
+	router     chi.Router
+	middleware *Middleware
 }
 
-func NewServer(controllers *planetscale.ControllerProvider) *Server {
+func NewServer(controllers *planetscale.ControllerProvider, middleware *Middleware) *Server {
 	s := &Server{
-		server: &http.Server{},
-		router: chi.NewRouter(),
+		server:     &http.Server{},
+		router:     chi.NewRouter(),
+		middleware: middleware,
 	}
 
 	logger := utilities.GetLogger()
@@ -71,7 +72,7 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 	})
 
 	s.router.Route("/products", func(r chi.Router) {
-		r.Use(middleware.EnsureValidToken())
+		r.Use(s.middleware.SetUserContext())
 		r.Route("/{productID}", func(r chi.Router) {
 			r.Get("/", controllers.Product.HandleGetProduct)
 		})
@@ -80,9 +81,9 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 	})
 
 	s.router.Group(func(r chi.Router) {
-		r.Use(middleware.EnsureValidToken())
+		r.Use(s.middleware.EnsureValidToken(), s.middleware.SetUserContext())
 
-		s.router.Route("/groups", func(r chi.Router) {
+		r.Route("/groups", func(r chi.Router) {
 			r.Get("/", controllers.ExpenseGroup.HandleGetExpenseGroups)
 			r.Post("/", controllers.ExpenseGroup.HandlePostExpenseGroup)
 			r.Route("/{groupID}", func(r chi.Router) {
@@ -100,7 +101,7 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 			})
 		})
 
-		s.router.Route("/expenses", func(r chi.Router) {
+		r.Route("/expenses", func(r chi.Router) {
 			r.Post("/", controllers.Expense.HandlePostExpense)
 			r.Route("/{expenseID}", func(r chi.Router) {
 				r.Patch("/", controllers.Expense.HandlePatchExpense)
@@ -109,7 +110,7 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 			})
 		})
 
-		s.router.Route("/settlements", func(r chi.Router) {
+		r.Route("/settlements", func(r chi.Router) {
 			r.Post("/", controllers.Settlement.HandlePostSettlement)
 			r.Route("/{settlementID}", func(r chi.Router) {
 				r.Patch("/", controllers.Settlement.HandlePatchSettlement)
@@ -118,7 +119,7 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 			})
 		})
 
-		s.router.Route("/split_types", func(r chi.Router) {
+		r.Route("/split_types", func(r chi.Router) {
 			r.Get("/", controllers.SplitType.HandleGetAllSplitTypes)
 		})
 	})

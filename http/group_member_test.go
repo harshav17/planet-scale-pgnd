@@ -18,29 +18,33 @@ func TestHandleGroupMembers_All(t *testing.T) {
 
 	t.Run("GET /groups/1/members", func(t *testing.T) {
 		t.Run("successful find", func(t *testing.T) {
+			user_id := "test-user-id"
 			server.repos.GroupMember = &db_mock.GroupMemberRepo{
 				FindFn: func(tx *sql.Tx, filter planetscale.GroupMemberFilter) ([]*planetscale.GroupMember, error) {
 					return []*planetscale.GroupMember{
 						{
 							GroupID: 1,
-							UserID:  "test-user-id",
+							UserID:  user_id,
 						},
 					}, nil
 				},
 			}
 
+			// generate token
+			token := server.buildJWTForTesting(t, user_id)
 			req, err := http.NewRequest("GET", "/groups/1/members", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
 			handler.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != http.StatusOK {
-				t.Errorf("expected status code %d, got %d", http.StatusOK, status)
+				t.Fatalf("expected status code %d, got %d", http.StatusOK, status)
 			}
 
 			var got findGroupMembersResponse
@@ -49,10 +53,10 @@ func TestHandleGroupMembers_All(t *testing.T) {
 				t.Fatal(err)
 			}
 			if len(got.GroupMembers) != 1 && got.N != 1 {
-				t.Errorf("expected 1 group member, got %d", len(got.GroupMembers))
+				t.Fatalf("expected 1 group member, got %d", len(got.GroupMembers))
 			}
 			if got.GroupMembers[0].GroupID != 1 {
-				t.Errorf("expected group id 1, got %d", got.GroupMembers[0].GroupID)
+				t.Fatalf("expected group id 1, got %d", got.GroupMembers[0].GroupID)
 			}
 		})
 	})
@@ -73,11 +77,13 @@ func TestHandleGroupMembers_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("POST", "/groups/1/members", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -97,11 +103,13 @@ func TestHandleGroupMembers_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("DELETE", "/groups/1/members/test-user-id", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)

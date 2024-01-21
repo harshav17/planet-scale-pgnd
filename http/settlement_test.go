@@ -28,11 +28,13 @@ func TestHandleSettlements_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("GET", "/groups/1/settlements", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -72,12 +74,14 @@ func TestHandleSettlements_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("POST", "/settlements", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -100,11 +104,13 @@ func TestHandleSettlements_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("GET", "/settlements/1", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -145,12 +151,14 @@ func TestHandleSettlements_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("PATCH", "/settlements/1", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -170,11 +178,13 @@ func TestHandleSettlements_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("DELETE", "/settlements/1", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)

@@ -39,11 +39,13 @@ func TestHandleExpense_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("GET", "/groups/1/expenses", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -92,12 +94,14 @@ func TestHandleExpense_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("POST", "/expenses", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -125,11 +129,13 @@ func TestHandleExpense_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("GET", "/expenses/1", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -176,12 +182,14 @@ func TestHandleExpense_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("PATCH", "/expenses/1", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -210,11 +218,13 @@ func TestHandleExpense_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("DELETE", "/expenses/1", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)

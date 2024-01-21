@@ -20,35 +20,49 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 
 	t.Run("GET /groups", func(t *testing.T) {
 		t.Run("successful get", func(t *testing.T) {
+			user_id := "test-user-id"
 			groups := []*planetscale.ExpenseGroup{
 				{
 					GroupName: "test group",
-					CreateBy:  "test-user-id",
+					CreateBy:  user_id,
+				},
+				{
+					GroupName: "test group 2",
+					CreateBy:  "test-user-id-2",
 				},
 			}
 
+			filteredGroups := []*planetscale.ExpenseGroup{}
 			server.repos.ExpenseGroup = &db_mock.ExpenseGroupRepo{
 				ListAllForUserFn: func(tx *sql.Tx, userID string) ([]*planetscale.ExpenseGroup, error) {
-					return groups, nil
+					// filter groups by user id
+					for _, group := range groups {
+						if group.CreateBy == userID {
+							filteredGroups = append(filteredGroups, group)
+						}
+					}
+					return filteredGroups, nil
 				},
 			}
 
+			token := server.buildJWTForTesting(t, user_id)
 			req, err := http.NewRequest("GET", "/groups", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
 			handler.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != http.StatusOK {
-				t.Errorf("expected status code %d, got %d", http.StatusOK, status)
+				t.Fatalf("expected status code %d, got %d", http.StatusOK, status)
 			}
 
 			expected := findExpenseGroupsResponse{
-				ExpenseGroups: groups,
+				ExpenseGroups: filteredGroups,
 				N:             1,
 			}
 			var got findExpenseGroupsResponse
@@ -57,7 +71,7 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(expected, got) {
-				t.Errorf("expected %v, got %v", expected, got)
+				t.Fatalf("expected %v, got %v", expected, got)
 			}
 
 		})
@@ -69,11 +83,13 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("GET", "/groups", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -107,11 +123,13 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("GET", "/groups", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -129,7 +147,6 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 		t.Run("successful post", func(t *testing.T) {
 			expenseGroup := planetscale.ExpenseGroup{
 				GroupName: "test group",
-				CreateBy:  "test-user-id",
 			}
 
 			server.repos.ExpenseGroup = &db_mock.ExpenseGroupRepo{
@@ -150,12 +167,14 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("POST", "/groups", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -171,7 +190,11 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				t.Fatal(err)
 			}
 			if got.ExpenseGroupID != 1 {
-				t.Errorf("expected group id 1, got %d", got.ExpenseGroupID)
+				t.Fatalf("expected group id 1, got %d", got.ExpenseGroupID)
+			} else if got.GroupName != "test group" {
+				t.Fatalf("expected group name test group, got %s", got.GroupName)
+			} else if got.CreateBy != "test_user_id" {
+				t.Fatalf("expected create by test_user_id, got %s", got.CreateBy)
 			}
 		})
 
@@ -194,12 +217,14 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("POST", "/groups", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -233,12 +258,14 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("PATCH", "/groups/1", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -267,11 +294,13 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("DELETE", "/groups/1", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -297,11 +326,13 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("GET", "/groups/1", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)
@@ -337,11 +368,13 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				},
 			}
 
+			token := server.buildJWTForTesting(t, "test_user_id")
 			req, err := http.NewRequest("GET", "/groups/1/balances", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			rr := httptest.NewRecorder()
 			handler := http.HandlerFunc(server.router.ServeHTTP)

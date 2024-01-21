@@ -19,6 +19,7 @@ type (
 		SplitType          SplitTypeRepo
 		Item               ItemRepo
 		ItemSplit          ItemSplitRepo
+		User               UserRepo
 	}
 
 	ServiceProvider struct {

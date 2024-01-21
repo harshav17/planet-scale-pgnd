@@ -51,3 +51,19 @@ func (r *userRepo) Create(tx *sql.Tx, user *planetscale.User) error {
 
 	return nil
 }
+
+func (r *userRepo) Upsert(tx *sql.Tx, user *planetscale.User) error {
+	query := `INSERT INTO users (user_id, email, name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE email = ?, name = ?`
+
+	result, err := tx.Exec(query, user.UserID, user.Email, user.Name, user.Email, user.Name)
+	if err != nil {
+		return err
+	}
+	_, err = result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	slog.Info("upserted user", slog.String("id", user.UserID))
+
+	return nil
+}
