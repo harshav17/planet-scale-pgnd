@@ -79,44 +79,48 @@ func NewServer(controllers *planetscale.ControllerProvider) *Server {
 		r.Get("/add", controllers.Product.HandleProductAdd)
 	})
 
-	s.router.Route("/groups", func(r chi.Router) {
-		r.Get("/", controllers.ExpenseGroup.HandleGetExpenseGroups)
-		r.Post("/", controllers.ExpenseGroup.HandlePostExpenseGroup)
-		r.Route("/{groupID}", func(r chi.Router) {
-			r.Patch("/", controllers.ExpenseGroup.HandlePatchExpenseGroup)
-			r.Delete("/", controllers.ExpenseGroup.HandleDeleteExpenseGroup)
-			r.Get("/", controllers.ExpenseGroup.HandleGetExpenseGroup)
-			r.Route("/members", func(r chi.Router) {
-				r.Get("/", controllers.GroupMember.HandleGetGroupMembers)
-				r.Post("/", controllers.GroupMember.HandlePostGroupMember)
-				r.Delete("/{userID}", controllers.GroupMember.HandleDeleteGroupMember)
+	s.router.Group(func(r chi.Router) {
+		r.Use(middleware.EnsureValidToken())
+
+		s.router.Route("/groups", func(r chi.Router) {
+			r.Get("/", controllers.ExpenseGroup.HandleGetExpenseGroups)
+			r.Post("/", controllers.ExpenseGroup.HandlePostExpenseGroup)
+			r.Route("/{groupID}", func(r chi.Router) {
+				r.Patch("/", controllers.ExpenseGroup.HandlePatchExpenseGroup)
+				r.Delete("/", controllers.ExpenseGroup.HandleDeleteExpenseGroup)
+				r.Get("/", controllers.ExpenseGroup.HandleGetExpenseGroup)
+				r.Route("/members", func(r chi.Router) {
+					r.Get("/", controllers.GroupMember.HandleGetGroupMembers)
+					r.Post("/", controllers.GroupMember.HandlePostGroupMember)
+					r.Delete("/{userID}", controllers.GroupMember.HandleDeleteGroupMember)
+				})
+				r.Get("/expenses", controllers.Expense.HandleGetGroupExpenses)
+				r.Get("/settlements", controllers.Settlement.HandleGetGroupSettlements)
+				r.Get("/balances", controllers.ExpenseGroup.HandleGetGroupBalances)
 			})
-			r.Get("/expenses", controllers.Expense.HandleGetGroupExpenses)
-			r.Get("/settlements", controllers.Settlement.HandleGetGroupSettlements)
-			r.Get("/balances", controllers.ExpenseGroup.HandleGetGroupBalances)
 		})
-	})
 
-	s.router.Route("/expenses", func(r chi.Router) {
-		r.Post("/", controllers.Expense.HandlePostExpense)
-		r.Route("/{expenseID}", func(r chi.Router) {
-			r.Patch("/", controllers.Expense.HandlePatchExpense)
-			r.Delete("/", controllers.Expense.HandleDeleteExpense)
-			r.Get("/", controllers.Expense.HandleGetExpense)
+		s.router.Route("/expenses", func(r chi.Router) {
+			r.Post("/", controllers.Expense.HandlePostExpense)
+			r.Route("/{expenseID}", func(r chi.Router) {
+				r.Patch("/", controllers.Expense.HandlePatchExpense)
+				r.Delete("/", controllers.Expense.HandleDeleteExpense)
+				r.Get("/", controllers.Expense.HandleGetExpense)
+			})
 		})
-	})
 
-	s.router.Route("/settlements", func(r chi.Router) {
-		r.Post("/", controllers.Settlement.HandlePostSettlement)
-		r.Route("/{settlementID}", func(r chi.Router) {
-			r.Patch("/", controllers.Settlement.HandlePatchSettlement)
-			r.Delete("/", controllers.Settlement.HandleDeleteSettlement)
-			r.Get("/", controllers.Settlement.HandleGetSettlement)
+		s.router.Route("/settlements", func(r chi.Router) {
+			r.Post("/", controllers.Settlement.HandlePostSettlement)
+			r.Route("/{settlementID}", func(r chi.Router) {
+				r.Patch("/", controllers.Settlement.HandlePatchSettlement)
+				r.Delete("/", controllers.Settlement.HandleDeleteSettlement)
+				r.Get("/", controllers.Settlement.HandleGetSettlement)
+			})
 		})
-	})
 
-	s.router.Route("/split_types", func(r chi.Router) {
-		r.Get("/", controllers.SplitType.HandleGetAllSplitTypes)
+		s.router.Route("/split_types", func(r chi.Router) {
+			r.Get("/", controllers.SplitType.HandleGetAllSplitTypes)
+		})
 	})
 
 	s.server.Handler = s.router
