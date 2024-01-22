@@ -315,13 +315,31 @@ func TestHandleExpense_All(t *testing.T) {
 
 	t.Run("DELETE /expenses/{id}", func(t *testing.T) {
 		t.Run("successful delete", func(t *testing.T) {
+			userID := "test-user-id"
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				DeleteFn: func(tx *sql.Tx, expenseID int64) error {
 					return nil
 				},
+				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
+					return &planetscale.Expense{
+						GroupID:     1,
+						PaidBy:      userID,
+						Amount:      100,
+						Description: "test expense",
+						Timestamp:   time.Now(),
+					}, nil
+				},
+			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  userID,
+					}, nil
+				},
 			}
 
-			token := server.buildJWTForTesting(t, "test_user_id")
+			token := server.buildJWTForTesting(t, userID)
 			req, err := http.NewRequest("DELETE", "/expenses/1", nil)
 			if err != nil {
 				t.Fatal(err)
@@ -335,6 +353,45 @@ func TestHandleExpense_All(t *testing.T) {
 
 			if status := rr.Code; status != http.StatusNoContent {
 				t.Errorf("expected status code %d, got %d", http.StatusNoContent, status)
+			}
+		})
+
+		t.Run("user not a member of group", func(t *testing.T) {
+			userID := "test-user-id"
+			server.repos.Expense = &db_mock.ExpenseRepo{
+				DeleteFn: func(tx *sql.Tx, expenseID int64) error {
+					return nil
+				},
+				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
+					return &planetscale.Expense{
+						GroupID:     1,
+						PaidBy:      userID,
+						Amount:      100,
+						Description: "test expense",
+						Timestamp:   time.Now(),
+					}, nil
+				},
+			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "no group member found with ID %d", groupID)
+				},
+			}
+
+			token := server.buildJWTForTesting(t, userID)
+			req, err := http.NewRequest("DELETE", "/expenses/1", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, status)
 			}
 		})
 	})
