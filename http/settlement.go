@@ -24,6 +24,12 @@ func NewSettlementController(repos *planetscale.RepoProvider, tm planetscale.Tra
 
 // HandleGetGroupSettlements handles the GET /groups/{groupID}/settlements endpoint.
 func (c *settlementController) HandleGetGroupSettlements(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	group32, err := strconv.Atoi(chi.URLParam(r, "groupID"))
 	if err != nil {
 		Error(w, r, err)
@@ -33,6 +39,12 @@ func (c *settlementController) HandleGetGroupSettlements(w http.ResponseWriter, 
 
 	var settlements []*planetscale.Settlement
 	getSettlementFunc := func(tx *sql.Tx) error {
+		// validate user is a member of the group
+		_, err = c.repos.GroupMember.Get(tx, groupID, user.UserID)
+		if err != nil {
+			return err
+		}
+
 		settlements, err = c.repos.Settlement.Find(tx, planetscale.SettlementFilter{
 			GroupID: groupID,
 		})
