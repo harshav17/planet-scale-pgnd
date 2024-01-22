@@ -8,7 +8,6 @@ type (
 		UserID          string  `json:"user_id"`
 		AmountOwed      float64 `json:"amount_owed"`
 		SharePercentage float64 `json:"share_percentage"`
-		SplitMethod     string  `json:"split_method"`
 		Note            string  `json:"note"`
 	}
 

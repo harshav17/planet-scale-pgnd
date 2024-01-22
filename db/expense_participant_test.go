@@ -39,7 +39,6 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 				UserID:          "non-existent-user-id",
 				AmountOwed:      100,
 				SharePercentage: 100,
-				SplitMethod:     "EQUAL",
 				Note:            "test expense",
 			}
 
@@ -81,7 +80,6 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 				UserID:          u.UserID,
 				AmountOwed:      100,
 				SharePercentage: 100,
-				SplitMethod:     "EQUAL",
 				Note:            "test expense",
 			})
 
@@ -150,7 +148,6 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 				UserID:          u.UserID,
 				AmountOwed:      100,
 				SharePercentage: 100,
-				SplitMethod:     "EQUAL",
 				Note:            "test expense",
 			})
 
@@ -174,8 +171,6 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 				t.Fatalf("expected amount owed %f, got %f", amountOwed, got.AmountOwed)
 			} else if got.SharePercentage != sharePercentage {
 				t.Fatalf("expected share percentage %f, got %f", sharePercentage, got.SharePercentage)
-			} else if got.SplitMethod != splitMethod {
-				t.Fatalf("expected split method %s, got %s", splitMethod, got.SplitMethod)
 			}
 		})
 	})
@@ -212,7 +207,6 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 				UserID:          u.UserID,
 				AmountOwed:      100,
 				SharePercentage: 100,
-				SplitMethod:     "EQUAL",
 				Note:            "test expense",
 			})
 
@@ -258,7 +252,6 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 				UserID:          u.UserID,
 				AmountOwed:      100,
 				SharePercentage: 100,
-				SplitMethod:     "EQUAL",
 				Note:            "test expense",
 			})
 

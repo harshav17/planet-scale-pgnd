@@ -25,7 +25,6 @@ func (r *expenseParticipantRepo) Get(tx *sql.Tx, expenseID int64, userID string)
 			user_id,
 			amount_owed,
 			share_percentage,
-			split_method,
 			note
 		FROM expense_participants
 		WHERE expense_id = ? AND user_id = ?
@@ -33,7 +32,7 @@ func (r *expenseParticipantRepo) Get(tx *sql.Tx, expenseID int64, userID string)
 
 	var participant planetscale.ExpenseParticipant
 	row := tx.QueryRow(query, expenseID, userID)
-	err := row.Scan(&participant.ExpenseID, &participant.UserID, &participant.AmountOwed, &participant.SharePercentage, &participant.SplitMethod, &participant.Note)
+	err := row.Scan(&participant.ExpenseID, &participant.UserID, &participant.AmountOwed, &participant.SharePercentage, &participant.Note)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// Handle no rows error specifically if needed
@@ -53,12 +52,11 @@ func (r *expenseParticipantRepo) Create(tx *sql.Tx, participant *planetscale.Exp
 			user_id,
 			amount_owed,
 			share_percentage,
-			split_method,
 			note
-		) VALUES (?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?)
 	`
 
-	result, err := tx.Exec(query, participant.ExpenseID, participant.UserID, participant.AmountOwed, participant.SharePercentage, participant.SplitMethod, participant.Note)
+	result, err := tx.Exec(query, participant.ExpenseID, participant.UserID, participant.AmountOwed, participant.SharePercentage, participant.Note)
 	if err != nil {
 		return err
 	}
@@ -105,20 +103,17 @@ func (r *expenseParticipantRepo) Update(tx *sql.Tx, expenseID int64, userID stri
 	if update.SharePercentage != nil {
 		participant.SharePercentage = *update.SharePercentage
 	}
-	if update.SplitMethod != nil {
-		participant.SplitMethod = *update.SplitMethod
-	}
 	if update.Note != nil {
 		participant.Note = *update.Note
 	}
 
 	query := `
 		UPDATE expense_participants
-		SET amount_owed = ?, share_percentage = ?, split_method = ?, note = ?
+		SET amount_owed = ?, share_percentage = ?, note = ?
 		WHERE expense_id = ? AND user_id = ?
 	`
 
-	result, err := tx.Exec(query, participant.AmountOwed, participant.SharePercentage, participant.SplitMethod, participant.Note, expenseID, userID)
+	result, err := tx.Exec(query, participant.AmountOwed, participant.SharePercentage, participant.Note, expenseID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +141,6 @@ func (r *expenseParticipantRepo) Find(tx *sql.Tx, filter planetscale.ExpensePart
 			user_id,
 			amount_owed,
 			share_percentage,
-			split_method,
 			note
 		FROM expense_participants
 	` + where.ToClause()
@@ -159,7 +153,7 @@ func (r *expenseParticipantRepo) Find(tx *sql.Tx, filter planetscale.ExpensePart
 	var participants []*planetscale.ExpenseParticipant
 	for rows.Next() {
 		var participant planetscale.ExpenseParticipant
-		err := rows.Scan(&participant.ExpenseID, &participant.UserID, &participant.AmountOwed, &participant.SharePercentage, &participant.SplitMethod, &participant.Note)
+		err := rows.Scan(&participant.ExpenseID, &participant.UserID, &participant.AmountOwed, &participant.SharePercentage, &participant.Note)
 		if err != nil {
 			return nil, err
 		}
