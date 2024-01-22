@@ -130,6 +130,12 @@ func (c *expenseGroupController) HandlePostExpenseGroup(w http.ResponseWriter, r
 }
 
 func (c *expenseGroupController) HandlePatchExpenseGroup(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	group32, err := strconv.Atoi(chi.URLParam(r, "groupID"))
 	if err != nil {
 		Error(w, r, err)
@@ -146,6 +152,15 @@ func (c *expenseGroupController) HandlePatchExpenseGroup(w http.ResponseWriter, 
 
 	var expenseGroup *planetscale.ExpenseGroup
 	patchExpenseGroupFunc := func(tx *sql.Tx) error {
+		expenseGroup, err = c.repos.ExpenseGroup.Get(tx, groupID)
+		if err != nil {
+			return err
+		}
+		if expenseGroup.CreateBy != user.UserID {
+			// TODO: should the users of the group be able to update the group?
+			return planetscale.Errorf(planetscale.EUNAUTHORIZED, "user %s is not authorized to update expense group %d", user.UserID, groupID)
+		}
+
 		expenseGroup, err = c.repos.ExpenseGroup.Update(tx, groupID, &update)
 		if err != nil {
 			return err
@@ -177,6 +192,12 @@ func (c *expenseGroupController) HandlePatchExpenseGroup(w http.ResponseWriter, 
 }
 
 func (c *expenseGroupController) HandleDeleteExpenseGroup(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	group32, err := strconv.Atoi(chi.URLParam(r, "groupID"))
 	if err != nil {
 		Error(w, r, err)
@@ -185,6 +206,14 @@ func (c *expenseGroupController) HandleDeleteExpenseGroup(w http.ResponseWriter,
 	groupID := int64(group32)
 
 	deleteExpenseGroupFunc := func(tx *sql.Tx) error {
+		expenseGroup, err := c.repos.ExpenseGroup.Get(tx, groupID)
+		if err != nil {
+			return err
+		}
+		if expenseGroup.CreateBy != user.UserID {
+			return planetscale.Errorf(planetscale.EUNAUTHORIZED, "user %s is not authorized to update expense group %d", user.UserID, groupID)
+		}
+
 		err = c.repos.ExpenseGroup.Delete(tx, groupID)
 		if err != nil {
 			return err

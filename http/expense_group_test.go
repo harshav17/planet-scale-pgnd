@@ -77,9 +77,23 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 		})
 
 		t.Run("no items found", func(t *testing.T) {
+			groups := []*planetscale.ExpenseGroup{
+				{
+					GroupName: "test group 2",
+					CreateBy:  "test-user-id-2",
+				},
+			}
+
+			filteredGroups := []*planetscale.ExpenseGroup{}
 			server.repos.ExpenseGroup = &db_mock.ExpenseGroupRepo{
 				ListAllForUserFn: func(tx *sql.Tx, userID string) ([]*planetscale.ExpenseGroup, error) {
-					return nil, nil
+					// filter groups by user id
+					for _, group := range groups {
+						if group.CreateBy == userID {
+							filteredGroups = append(filteredGroups, group)
+						}
+					}
+					return filteredGroups, nil
 				},
 			}
 
@@ -100,7 +114,7 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 			}
 
 			expected := findExpenseGroupsResponse{
-				ExpenseGroups: nil,
+				ExpenseGroups: []*planetscale.ExpenseGroup{},
 				N:             0,
 			}
 			var got findExpenseGroupsResponse
@@ -238,17 +252,23 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 
 	t.Run("PATCH /groups/:id", func(t *testing.T) {
 		t.Run("successful patch", func(t *testing.T) {
+			userID := "test-user-id"
 			expenseGroup := planetscale.ExpenseGroup{
 				GroupName:      "test group",
-				CreateBy:       "test-user-id",
+				CreateBy:       userID,
 				ExpenseGroupID: 1,
 			}
+			updateGroupName := "test group updated"
 			expenseGroupUpdate := planetscale.ExpenseGroupUpdate{
-				GroupName: "test group",
+				GroupName: updateGroupName,
 			}
 
 			server.repos.ExpenseGroup = &db_mock.ExpenseGroupRepo{
+				GetFn: func(tx *sql.Tx, groupID int64) (*planetscale.ExpenseGroup, error) {
+					return &expenseGroup, nil
+				},
 				UpdateFn: func(tx *sql.Tx, groupID int64, group *planetscale.ExpenseGroupUpdate) (*planetscale.ExpenseGroup, error) {
+					expenseGroup.GroupName = updateGroupName
 					return &expenseGroup, nil
 				},
 			}
@@ -258,7 +278,7 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			token := server.buildJWTForTesting(t, "test_user_id")
+			token := server.buildJWTForTesting(t, userID)
 			req, err := http.NewRequest("PATCH", "/groups/1", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
@@ -272,7 +292,7 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			if status := rr.Code; status != http.StatusOK {
-				t.Errorf("expected status code %d, got %d", http.StatusOK, status)
+				t.Fatalf("expected status code %d, got %d", http.StatusOK, status)
 			}
 
 			var got planetscale.ExpenseGroup
@@ -281,20 +301,73 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 				t.Fatal(err)
 			}
 			if got.ExpenseGroupID != 1 {
-				t.Errorf("expected group id 1, got %d", got.ExpenseGroupID)
+				t.Fatalf("expected group id 1, got %d", got.ExpenseGroupID)
+			} else if got.GroupName != updateGroupName {
+				t.Fatalf("expected group name %s, got %s", updateGroupName, got.GroupName)
+			}
+		})
+
+		t.Run("unauthorized", func(t *testing.T) {
+			expenseGroup := planetscale.ExpenseGroup{
+				GroupName:      "test group",
+				CreateBy:       "test-user-id-1",
+				ExpenseGroupID: 1,
+			}
+			expenseGroupUpdate := planetscale.ExpenseGroupUpdate{
+				GroupName: "test group updated",
+			}
+
+			server.repos.ExpenseGroup = &db_mock.ExpenseGroupRepo{
+				GetFn: func(tx *sql.Tx, groupID int64) (*planetscale.ExpenseGroup, error) {
+					return &expenseGroup, nil
+				},
+				UpdateFn: func(tx *sql.Tx, groupID int64, group *planetscale.ExpenseGroupUpdate) (*planetscale.ExpenseGroup, error) {
+					return nil, nil
+				},
+			}
+
+			body, err := json.Marshal(expenseGroupUpdate)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			token := server.buildJWTForTesting(t, "test-user-id-2")
+			req, err := http.NewRequest("PATCH", "/groups/1", bytes.NewReader(body))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusUnauthorized {
+				t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, status)
 			}
 		})
 	})
 
 	t.Run("DELETE /groups/:id", func(t *testing.T) {
 		t.Run("successful delete", func(t *testing.T) {
+			userID := "test-user-id"
+			expenseGroup := planetscale.ExpenseGroup{
+				GroupName:      "test group",
+				CreateBy:       userID,
+				ExpenseGroupID: 1,
+			}
 			server.repos.ExpenseGroup = &db_mock.ExpenseGroupRepo{
+				GetFn: func(tx *sql.Tx, groupID int64) (*planetscale.ExpenseGroup, error) {
+					return &expenseGroup, nil
+				},
 				DeleteFn: func(tx *sql.Tx, groupID int64) error {
 					return nil
 				},
 			}
 
-			token := server.buildJWTForTesting(t, "test_user_id")
+			token := server.buildJWTForTesting(t, userID)
 			req, err := http.NewRequest("DELETE", "/groups/1", nil)
 			if err != nil {
 				t.Fatal(err)
@@ -308,6 +381,39 @@ func TestHandleExpenseGroups_All(t *testing.T) {
 
 			if status := rr.Code; status != http.StatusNoContent {
 				t.Errorf("expected status code %d, got %d", http.StatusOK, status)
+			}
+		})
+
+		t.Run("unauthorized", func(t *testing.T) {
+			expenseGroup := planetscale.ExpenseGroup{
+				GroupName:      "test group",
+				CreateBy:       "test-user-id-1",
+				ExpenseGroupID: 1,
+			}
+
+			server.repos.ExpenseGroup = &db_mock.ExpenseGroupRepo{
+				GetFn: func(tx *sql.Tx, groupID int64) (*planetscale.ExpenseGroup, error) {
+					return &expenseGroup, nil
+				},
+				DeleteFn: func(tx *sql.Tx, groupID int64) error {
+					return nil
+				},
+			}
+
+			token := server.buildJWTForTesting(t, "test-user-id-2")
+			req, err := http.NewRequest("DELETE", "/groups/1", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusUnauthorized {
+				t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, status)
 			}
 		})
 	})
