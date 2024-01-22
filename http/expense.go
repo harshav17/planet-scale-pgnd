@@ -100,6 +100,13 @@ func (c *expenseController) HandleGetExpense(w http.ResponseWriter, r *http.Requ
 		if err != nil {
 			return err
 		}
+
+		// check if user is a member of the group
+		_, err = c.repos.GroupMember.Get(tx, expense.GroupID, expense.PaidBy)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 
