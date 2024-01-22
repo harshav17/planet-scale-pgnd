@@ -27,7 +27,7 @@ func (r *groupMemberRepo) Get(tx *sql.Tx, groupID int64, userID string) (*planet
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// Handle no rows error specifically if needed
-			return nil, fmt.Errorf("no group member found with ID %d", groupID)
+			return nil, planetscale.Errorf(planetscale.ENOTFOUND, "no group member found with ID %d", groupID)
 		}
 		return nil, err
 	}

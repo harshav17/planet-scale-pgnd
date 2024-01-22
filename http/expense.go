@@ -25,6 +25,12 @@ func NewExpenseController(repos *planetscale.RepoProvider, services *planetscale
 }
 
 func (c *expenseController) HandleGetGroupExpenses(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	group32, err := strconv.Atoi(chi.URLParam(r, "groupID"))
 	if err != nil {
 		Error(w, r, err)
@@ -34,6 +40,12 @@ func (c *expenseController) HandleGetGroupExpenses(w http.ResponseWriter, r *htt
 
 	var expenses []*planetscale.Expense
 	getExpenseFunc := func(tx *sql.Tx) error {
+		// check if user is a member of the group
+		_, err = c.repos.GroupMember.Get(tx, groupID, user.UserID)
+		if err != nil {
+			return err
+		}
+
 		expenses, err = c.repos.Expense.Find(tx, planetscale.ExpenseFilter{
 			GroupID: groupID,
 		})

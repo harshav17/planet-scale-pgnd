@@ -23,23 +23,32 @@ func TestHandleExpense_All(t *testing.T) {
 
 	t.Run("GET /groups/1/expenses", func(t *testing.T) {
 		t.Run("successful find", func(t *testing.T) {
+			userID := "test-user-id"
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				FindFn: func(tx *sql.Tx, filter planetscale.ExpenseFilter) ([]*planetscale.Expense, error) {
 					return []*planetscale.Expense{
 						{
 							GroupID:     1,
-							PaidBy:      "test-user-id",
+							PaidBy:      userID,
 							Amount:      100,
 							Description: "test expense",
 							Timestamp:   time.Now(),
-							CreatedBy:   "test-user-id",
-							UpdatedBy:   "test-user-id",
+							CreatedBy:   userID,
+							UpdatedBy:   userID,
 						},
 					}, nil
 				},
 			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  userID,
+					}, nil
+				},
+			}
 
-			token := server.buildJWTForTesting(t, "test_user_id")
+			token := server.buildJWTForTesting(t, userID)
 			req, err := http.NewRequest("GET", "/groups/1/expenses", nil)
 			if err != nil {
 				t.Fatal(err)
@@ -65,6 +74,46 @@ func TestHandleExpense_All(t *testing.T) {
 			}
 			if got.Expenses[0].GroupID != 1 {
 				t.Errorf("expected group id 1, got %d", got.Expenses[0].GroupID)
+			}
+		})
+
+		t.Run("user not a member of group", func(t *testing.T) {
+			userID := "test-user-id"
+			server.repos.Expense = &db_mock.ExpenseRepo{
+				FindFn: func(tx *sql.Tx, filter planetscale.ExpenseFilter) ([]*planetscale.Expense, error) {
+					return []*planetscale.Expense{
+						{
+							GroupID:     1,
+							PaidBy:      userID,
+							Amount:      100,
+							Description: "test expense",
+							Timestamp:   time.Now(),
+							CreatedBy:   userID,
+							UpdatedBy:   userID,
+						},
+					}, nil
+				},
+			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "no group member found with ID %d", groupID)
+				},
+			}
+
+			token := server.buildJWTForTesting(t, userID)
+			req, err := http.NewRequest("GET", "/groups/1/expenses", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, status)
 			}
 		})
 	})
