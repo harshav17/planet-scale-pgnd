@@ -98,6 +98,12 @@ func TestHandleGroupMembers_All(t *testing.T) {
 				CreateFn: func(tx *sql.Tx, groupMember *planetscale.GroupMember) error {
 					return nil
 				},
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  "test-user-id",
+					}, nil
+				},
 			}
 
 			groupMember := planetscale.GroupMember{
@@ -122,6 +128,38 @@ func TestHandleGroupMembers_All(t *testing.T) {
 
 			if status := rr.Code; status != http.StatusCreated {
 				t.Errorf("expected status code %d, got %d", http.StatusCreated, status)
+			}
+		})
+
+		t.Run("user not part of the group", func(t *testing.T) {
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "user not found")
+				},
+			}
+
+			groupMember := planetscale.GroupMember{
+				UserID: "test-user-id",
+			}
+			body, err := json.Marshal(groupMember)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			token := server.buildJWTForTesting(t, "test_user_id")
+			req, err := http.NewRequest("POST", "/groups/1/members", bytes.NewReader(body))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, status)
 			}
 		})
 	})

@@ -82,6 +82,12 @@ type findGroupMembersResponse struct {
 }
 
 func (c *groupMemberController) HandlePostGroupMember(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	group32, err := strconv.Atoi(chi.URLParam(r, "groupID"))
 	if err != nil {
 		Error(w, r, err)
@@ -97,6 +103,12 @@ func (c *groupMemberController) HandlePostGroupMember(w http.ResponseWriter, r *
 	}
 
 	createGroupMemberFunc := func(tx *sql.Tx) error {
+		// check if user is a member of the group
+		_, err = c.repos.GroupMember.Get(tx, groupMember.GroupID, user.UserID)
+		if err != nil {
+			return err
+		}
+
 		err = c.repos.GroupMember.Create(tx, &groupMember)
 		if err != nil {
 			return err
