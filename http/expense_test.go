@@ -261,8 +261,20 @@ func TestHandleExpense_All(t *testing.T) {
 	t.Run("PATCH /expenses/{id}", func(t *testing.T) {
 		t.Run("successful update", func(t *testing.T) {
 			userID := "test-user-id"
+			newAmount := float64(200)
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				UpdateFn: func(tx *sql.Tx, expenseID int64, update *planetscale.ExpenseUpdate) (*planetscale.Expense, error) {
+					return &planetscale.Expense{
+						GroupID:     1,
+						PaidBy:      userID,
+						Amount:      newAmount,
+						Description: "test expense",
+						Timestamp:   time.Now(),
+						CreatedBy:   userID,
+						UpdatedBy:   userID,
+					}, nil
+				},
+				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
 						GroupID:     1,
 						PaidBy:      userID,
@@ -274,12 +286,18 @@ func TestHandleExpense_All(t *testing.T) {
 					}, nil
 				},
 			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  userID,
+					}, nil
+				},
+			}
 
-			newAmount := float64(200)
 			expenseUpdate := planetscale.ExpenseUpdate{
 				Amount: &newAmount,
 			}
-
 			body, err := json.Marshal(expenseUpdate)
 			if err != nil {
 				t.Fatal(err)
@@ -308,7 +326,68 @@ func TestHandleExpense_All(t *testing.T) {
 				t.Fatal(err)
 			}
 			if got.GroupID != 1 {
-				t.Errorf("expected group id 1, got %d", got.GroupID)
+				t.Fatalf("expected group id 1, got %d", got.GroupID)
+			} else if got.Amount != newAmount {
+				t.Fatalf("expected amount %f, got %f", newAmount, got.Amount)
+			}
+		})
+
+		t.Run("user not a member of group", func(t *testing.T) {
+			userID := "test-user-id"
+			newAmount := float64(200)
+			server.repos.Expense = &db_mock.ExpenseRepo{
+				UpdateFn: func(tx *sql.Tx, expenseID int64, update *planetscale.ExpenseUpdate) (*planetscale.Expense, error) {
+					return &planetscale.Expense{
+						GroupID:     1,
+						PaidBy:      userID,
+						Amount:      newAmount,
+						Description: "test expense",
+						Timestamp:   time.Now(),
+						CreatedBy:   userID,
+						UpdatedBy:   userID,
+					}, nil
+				},
+				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
+					return &planetscale.Expense{
+						GroupID:     1,
+						PaidBy:      userID,
+						Amount:      100,
+						Description: "test expense",
+						Timestamp:   time.Now(),
+						CreatedBy:   userID,
+						UpdatedBy:   userID,
+					}, nil
+				},
+			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "no group member found with ID %d", groupID)
+				},
+			}
+
+			expenseUpdate := planetscale.ExpenseUpdate{
+				Amount: &newAmount,
+			}
+			body, err := json.Marshal(expenseUpdate)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			token := server.buildJWTForTesting(t, userID)
+			req, err := http.NewRequest("PATCH", "/expenses/1", bytes.NewReader(body))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, status)
 			}
 		})
 	})

@@ -226,6 +226,12 @@ func (c *expenseController) HandleDeleteExpense(w http.ResponseWriter, r *http.R
 }
 
 func (c *expenseController) HandlePatchExpense(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	expense32, err := strconv.Atoi(chi.URLParam(r, "expenseID"))
 	if err != nil {
 		Error(w, r, err)
@@ -242,6 +248,16 @@ func (c *expenseController) HandlePatchExpense(w http.ResponseWriter, r *http.Re
 
 	var expense *planetscale.Expense
 	patchExpenseFunc := func(tx *sql.Tx) error {
+		// check if the user is a member of the group
+		foundExp, err := c.repos.Expense.Get(tx, expenseID)
+		if err != nil {
+			return err
+		}
+		_, err = c.repos.GroupMember.Get(tx, foundExp.GroupID, user.UserID)
+		if err != nil {
+			return err
+		}
+
 		expense, err = c.repos.Expense.Update(tx, expenseID, &expenseUpdate)
 		if err != nil {
 			return err
