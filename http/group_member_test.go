@@ -166,9 +166,40 @@ func TestHandleGroupMembers_All(t *testing.T) {
 
 	t.Run("DELETE /groups/1/members/user-id", func(t *testing.T) {
 		t.Run("successful delete", func(t *testing.T) {
+			userID := "test-user-id"
 			server.repos.GroupMember = &db_mock.GroupMemberRepo{
 				DeleteFn: func(tx *sql.Tx, groupID int64, userID string) error {
 					return nil
+				},
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  userID,
+					}, nil
+				},
+			}
+
+			token := server.buildJWTForTesting(t, userID)
+			req, err := http.NewRequest("DELETE", "/groups/1/members/test-user-id", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusNoContent {
+				t.Errorf("expected status code %d, got %d", http.StatusNoContent, status)
+			}
+		})
+
+		t.Run("user not part of the group", func(t *testing.T) {
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "user not found")
 				},
 			}
 
@@ -184,8 +215,8 @@ func TestHandleGroupMembers_All(t *testing.T) {
 			handler := http.HandlerFunc(server.router.ServeHTTP)
 			handler.ServeHTTP(rr, req)
 
-			if status := rr.Code; status != http.StatusNoContent {
-				t.Errorf("expected status code %d, got %d", http.StatusNoContent, status)
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, status)
 			}
 		})
 	})
