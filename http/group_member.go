@@ -20,6 +20,12 @@ func NewGroupMemberController(repos *planetscale.RepoProvider, tm planetscale.Tr
 }
 
 func (c *groupMemberController) HandleGetGroupMembers(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	group32, err := strconv.Atoi(chi.URLParam(r, "groupID"))
 	if err != nil {
 		Error(w, r, err)
@@ -29,6 +35,12 @@ func (c *groupMemberController) HandleGetGroupMembers(w http.ResponseWriter, r *
 
 	var groupMembers []*planetscale.GroupMember
 	getGroupMemberFunc := func(tx *sql.Tx) error {
+		// check if user is a member of the group
+		_, err = c.repos.GroupMember.Get(tx, groupID, user.UserID)
+		if err != nil {
+			return err
+		}
+
 		groupMembers, err = c.repos.GroupMember.Find(tx, planetscale.GroupMemberFilter{
 			GroupID: groupID,
 		})
