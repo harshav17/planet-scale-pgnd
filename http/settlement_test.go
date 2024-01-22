@@ -92,14 +92,60 @@ func TestHandleSettlements_All(t *testing.T) {
 
 	t.Run("POST /settlements", func(t *testing.T) {
 		t.Run("successful create", func(t *testing.T) {
+			contextUserID := "test_user_id"
 			server.repos.Settlement = &db_mock.SettlementRepo{
 				CreateFn: func(tx *sql.Tx, s *planetscale.Settlement) error {
 					return nil
 				},
 			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  contextUserID,
+					}, nil
+				},
+			}
 
 			settlement := planetscale.Settlement{
 				GroupID: 1,
+				PaidBy:  contextUserID,
+				PaidTo:  "test_user_id_2",
+			}
+			body, err := json.Marshal(settlement)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			token := server.buildJWTForTesting(t, contextUserID)
+			req, err := http.NewRequest("POST", "/settlements", bytes.NewReader(body))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusCreated {
+				t.Errorf("expected status code %d, got %d", http.StatusCreated, status)
+			}
+		})
+
+		t.Run("group member not found", func(t *testing.T) {
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "group member not found")
+				},
+			}
+
+			settlement := planetscale.Settlement{
+				GroupID: 1,
+				PaidBy:  "test_user_id",
+				PaidTo:  "test_user_id_2",
 			}
 			body, err := json.Marshal(settlement)
 			if err != nil {
@@ -119,8 +165,98 @@ func TestHandleSettlements_All(t *testing.T) {
 			handler := http.HandlerFunc(server.router.ServeHTTP)
 			handler.ServeHTTP(rr, req)
 
-			if status := rr.Code; status != http.StatusCreated {
-				t.Errorf("expected status code %d, got %d", http.StatusCreated, status)
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, status)
+			}
+		})
+
+		t.Run("paid by user is not the context user", func(t *testing.T) {
+			contextUserID := "test_user_id"
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  contextUserID,
+					}, nil
+				},
+			}
+
+			settlement := planetscale.Settlement{
+				GroupID: 1,
+				PaidBy:  "test_user_id_2",
+				PaidTo:  "test_user_id_3",
+			}
+			body, err := json.Marshal(settlement)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			token := server.buildJWTForTesting(t, "test_user_id")
+			req, err := http.NewRequest("POST", "/settlements", bytes.NewReader(body))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusBadRequest {
+				t.Errorf("expected status code %d, got %d", http.StatusBadRequest, status)
+			}
+		})
+
+		t.Run("paid to user is not a member of the group", func(t *testing.T) {
+			contextUserID := "test_user_id"
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					if userID == "test_user_id_2" {
+						return nil, planetscale.Errorf(planetscale.ENOTFOUND, "group member not found")
+					}
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  contextUserID,
+					}, nil
+				},
+			}
+
+			settlement := planetscale.Settlement{
+				GroupID: 1,
+				PaidBy:  contextUserID,
+				PaidTo:  "test_user_id_2",
+			}
+			body, err := json.Marshal(settlement)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			token := server.buildJWTForTesting(t, contextUserID)
+			req, err := http.NewRequest("POST", "/settlements", bytes.NewReader(body))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Fatalf("expected status code %d, got %d", http.StatusNotFound, status)
+			}
+
+			got := ErrorResponse{}
+			err = json.Unmarshal(rr.Body.Bytes(), &got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.Error != "paid to user is not a member of this group" {
+				t.Errorf("expected error message %s, got %s", "paid to user is not a member of this group", got.Error)
 			}
 		})
 	})

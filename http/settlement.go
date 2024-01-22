@@ -86,6 +86,12 @@ type findSettlementsResponse struct {
 }
 
 func (c *settlementController) HandlePostSettlement(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	var settlement planetscale.Settlement
 	err := ReceiveJson(w, r, &settlement)
 	if err != nil {
@@ -94,6 +100,24 @@ func (c *settlementController) HandlePostSettlement(w http.ResponseWriter, r *ht
 	}
 
 	createSettlementFunc := func(tx *sql.Tx) error {
+		// validate user is a member of the group
+		_, err = c.repos.GroupMember.Get(tx, settlement.GroupID, user.UserID)
+		if err != nil {
+			// rewrap error to add more context
+			return planetscale.Errorf(planetscale.ENOTFOUND, "you are not a member of this group")
+		}
+
+		// validate paid by user is context user
+		if settlement.PaidBy != user.UserID {
+			return planetscale.Errorf(planetscale.EINVALID, "you cannot create a settlement for another user")
+		}
+
+		// validate paid to user is a member of the group
+		_, err = c.repos.GroupMember.Get(tx, settlement.GroupID, settlement.PaidTo)
+		if err != nil {
+			return planetscale.Errorf(planetscale.ENOTFOUND, "paid to user is not a member of this group")
+		}
+
 		err = c.repos.Settlement.Create(tx, &settlement)
 		if err != nil {
 			return err
