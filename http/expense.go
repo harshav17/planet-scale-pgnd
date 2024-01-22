@@ -134,6 +134,12 @@ func (c *expenseController) HandleGetExpense(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *expenseController) HandlePostExpense(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	var expense planetscale.Expense
 	err := ReceiveJson(w, r, &expense)
 	if err != nil {
@@ -141,6 +147,9 @@ func (c *expenseController) HandlePostExpense(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// add user id to expense
+	expense.CreatedBy = user.UserID
+	expense.UpdatedBy = user.UserID
 	err = c.services.Expense.CreateExpense(r.Context(), &expense)
 	if err != nil {
 		Error(w, r, err)

@@ -33,8 +33,6 @@ func TestHandleExpense_All(t *testing.T) {
 							Amount:      100,
 							Description: "test expense",
 							Timestamp:   time.Now(),
-							CreatedBy:   userID,
-							UpdatedBy:   userID,
 						},
 					}, nil
 				},
@@ -88,8 +86,6 @@ func TestHandleExpense_All(t *testing.T) {
 							Amount:      100,
 							Description: "test expense",
 							Timestamp:   time.Now(),
-							CreatedBy:   userID,
-							UpdatedBy:   userID,
 						},
 					}, nil
 				},
@@ -120,6 +116,7 @@ func TestHandleExpense_All(t *testing.T) {
 
 	t.Run("POST /expenses", func(t *testing.T) {
 		t.Run("successful post", func(t *testing.T) {
+			userID := "test-user-id"
 			server.services.Expense = &service_mock.ExpenseService{
 				CreateExpenseFn: func(ctx context.Context, expense *planetscale.Expense) error {
 					expense.ExpenseID = 1
@@ -129,12 +126,10 @@ func TestHandleExpense_All(t *testing.T) {
 
 			expense := planetscale.Expense{
 				GroupID:     1,
-				PaidBy:      "test-user-id",
+				PaidBy:      userID,
 				Amount:      100,
 				Description: "test expense",
 				Timestamp:   time.Now(),
-				CreatedBy:   "test-user-id",
-				UpdatedBy:   "test-user-id",
 				SplitTypeID: 1,
 			}
 
@@ -143,7 +138,7 @@ func TestHandleExpense_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			token := server.buildJWTForTesting(t, "test_user_id")
+			token := server.buildJWTForTesting(t, userID)
 			req, err := http.NewRequest("POST", "/expenses", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
@@ -159,6 +154,21 @@ func TestHandleExpense_All(t *testing.T) {
 			if status := rr.Code; status != http.StatusCreated {
 				t.Errorf("expected status code %d, got %d", http.StatusCreated, status)
 			}
+
+			var got planetscale.Expense
+			err = json.Unmarshal(rr.Body.Bytes(), &got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.ExpenseID != 1 {
+				t.Errorf("expected expense id 1, got %d", got.ExpenseID)
+			} else if got.CreatedBy != userID {
+				t.Errorf("expected created by %s, got %s", userID, got.CreatedBy)
+			} else if got.UpdatedBy != userID {
+				t.Errorf("expected updated by %s, got %s", userID, got.UpdatedBy)
+			} else if got.PaidBy != userID {
+				t.Errorf("expected paid by %s, got %s", userID, got.PaidBy)
+			}
 		})
 	})
 
@@ -173,8 +183,6 @@ func TestHandleExpense_All(t *testing.T) {
 						Amount:      100,
 						Description: "test expense",
 						Timestamp:   time.Now(),
-						CreatedBy:   userID,
-						UpdatedBy:   userID,
 					}, nil
 				},
 			}
@@ -223,8 +231,6 @@ func TestHandleExpense_All(t *testing.T) {
 						Amount:      100,
 						Description: "test expense",
 						Timestamp:   time.Now(),
-						CreatedBy:   userID,
-						UpdatedBy:   userID,
 					}, nil
 				},
 			}
@@ -254,16 +260,17 @@ func TestHandleExpense_All(t *testing.T) {
 
 	t.Run("PATCH /expenses/{id}", func(t *testing.T) {
 		t.Run("successful update", func(t *testing.T) {
+			userID := "test-user-id"
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				UpdateFn: func(tx *sql.Tx, expenseID int64, update *planetscale.ExpenseUpdate) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
 						GroupID:     1,
-						PaidBy:      "test-user-id",
+						PaidBy:      userID,
 						Amount:      100,
 						Description: "test expense",
 						Timestamp:   time.Now(),
-						CreatedBy:   "test-user-id",
-						UpdatedBy:   "test-user-id",
+						CreatedBy:   userID,
+						UpdatedBy:   userID,
 					}, nil
 				},
 			}
@@ -278,7 +285,7 @@ func TestHandleExpense_All(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			token := server.buildJWTForTesting(t, "test_user_id")
+			token := server.buildJWTForTesting(t, userID)
 			req, err := http.NewRequest("PATCH", "/expenses/1", bytes.NewReader(body))
 			if err != nil {
 				t.Fatal(err)
