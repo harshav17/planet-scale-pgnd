@@ -150,6 +150,12 @@ func (c *settlementController) HandlePostSettlement(w http.ResponseWriter, r *ht
 }
 
 func (c *settlementController) HandleGetSettlement(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	settlement32, err := strconv.Atoi(chi.URLParam(r, "settlementID"))
 	if err != nil {
 		Error(w, r, err)
@@ -163,6 +169,13 @@ func (c *settlementController) HandleGetSettlement(w http.ResponseWriter, r *htt
 		if err != nil {
 			return err
 		}
+
+		// validate user is a member of the group
+		_, err := c.repos.GroupMember.Get(tx, settlement.GroupID, user.UserID)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 
@@ -190,6 +203,12 @@ func (c *settlementController) HandleGetSettlement(w http.ResponseWriter, r *htt
 }
 
 func (c *settlementController) HandlePatchSettlement(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	settlement32, err := strconv.Atoi(chi.URLParam(r, "settlementID"))
 	if err != nil {
 		Error(w, r, err)
@@ -205,6 +224,12 @@ func (c *settlementController) HandlePatchSettlement(w http.ResponseWriter, r *h
 	}
 
 	updateSettlementFunc := func(tx *sql.Tx) error {
+		// validate user is a member of the group
+		_, err = c.repos.GroupMember.Get(tx, *settlement.GroupID, user.UserID)
+		if err != nil {
+			return err
+		}
+
 		_, err = c.repos.Settlement.Update(tx, settlementID, &settlement)
 		if err != nil {
 			return err
@@ -236,6 +261,12 @@ func (c *settlementController) HandlePatchSettlement(w http.ResponseWriter, r *h
 }
 
 func (c *settlementController) HandleDeleteSettlement(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	settlement32, err := strconv.Atoi(chi.URLParam(r, "settlementID"))
 	if err != nil {
 		Error(w, r, err)
@@ -244,6 +275,17 @@ func (c *settlementController) HandleDeleteSettlement(w http.ResponseWriter, r *
 	settlementID := int64(settlement32)
 
 	deleteSettlementFunc := func(tx *sql.Tx) error {
+		// validate user is a member of the group
+		settlement, err := c.repos.Settlement.Get(tx, settlementID)
+		if err != nil {
+			return err
+		}
+
+		_, err = c.repos.GroupMember.Get(tx, settlement.GroupID, user.UserID)
+		if err != nil {
+			return err
+		}
+
 		err = c.repos.Settlement.Delete(tx, settlementID)
 		if err != nil {
 			return err

@@ -263,6 +263,7 @@ func TestHandleSettlements_All(t *testing.T) {
 
 	t.Run("GET /settlements/{id}", func(t *testing.T) {
 		t.Run("successful get", func(t *testing.T) {
+			userID := "test_user_id"
 			server.repos.Settlement = &db_mock.SettlementRepo{
 				GetFn: func(tx *sql.Tx, settlementID int64) (*planetscale.Settlement, error) {
 					return &planetscale.Settlement{
@@ -271,8 +272,16 @@ func TestHandleSettlements_All(t *testing.T) {
 					}, nil
 				},
 			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  userID,
+					}, nil
+				},
+			}
 
-			token := server.buildJWTForTesting(t, "test_user_id")
+			token := server.buildJWTForTesting(t, userID)
 			req, err := http.NewRequest("GET", "/settlements/1", nil)
 			if err != nil {
 				t.Fatal(err)
@@ -300,13 +309,89 @@ func TestHandleSettlements_All(t *testing.T) {
 				t.Errorf("expected group id 1, got %d", got.GroupID)
 			}
 		})
+
+		t.Run("user not a member of the group", func(t *testing.T) {
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "group member not found")
+				},
+			}
+
+			token := server.buildJWTForTesting(t, "test_user_id")
+			req, err := http.NewRequest("GET", "/settlements/1", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, status)
+			}
+
+			got := ErrorResponse{}
+			err = json.Unmarshal(rr.Body.Bytes(), &got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.Error != "group member not found" {
+				t.Errorf("expected error message %s, got %s", "member not found", got.Error)
+			}
+		})
 	})
 
 	t.Run("PATCH /settlements/{id}", func(t *testing.T) {
 		t.Run("successful update", func(t *testing.T) {
+			userID := "test_user_id"
 			server.repos.Settlement = &db_mock.SettlementRepo{
 				UpdateFn: func(tx *sql.Tx, settlementID int64, settlement *planetscale.SettlementUpdate) (*planetscale.Settlement, error) {
 					return nil, nil
+				},
+			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  userID,
+					}, nil
+				},
+			}
+
+			settlement := planetscale.Settlement{
+				SettlementID: 1,
+				GroupID:      1,
+			}
+			body, err := json.Marshal(settlement)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			token := server.buildJWTForTesting(t, userID)
+			req, err := http.NewRequest("PATCH", "/settlements/1", bytes.NewReader(body))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusOK {
+				t.Errorf("expected status code %d, got %d", http.StatusOK, status)
+			}
+		})
+
+		t.Run("user not a member of the group", func(t *testing.T) {
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "group member not found")
 				},
 			}
 
@@ -332,8 +417,17 @@ func TestHandleSettlements_All(t *testing.T) {
 			handler := http.HandlerFunc(server.router.ServeHTTP)
 			handler.ServeHTTP(rr, req)
 
-			if status := rr.Code; status != http.StatusOK {
-				t.Errorf("expected status code %d, got %d", http.StatusOK, status)
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, status)
+			}
+
+			got := ErrorResponse{}
+			err = json.Unmarshal(rr.Body.Bytes(), &got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.Error != "group member not found" {
+				t.Errorf("expected error message %s, got %s", "member not found", got.Error)
 			}
 		})
 	})
@@ -343,6 +437,20 @@ func TestHandleSettlements_All(t *testing.T) {
 			server.repos.Settlement = &db_mock.SettlementRepo{
 				DeleteFn: func(tx *sql.Tx, settlementID int64) error {
 					return nil
+				},
+				GetFn: func(tx *sql.Tx, settlementID int64) (*planetscale.Settlement, error) {
+					return &planetscale.Settlement{
+						SettlementID: 1,
+						GroupID:      1,
+					}, nil
+				},
+			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return &planetscale.GroupMember{
+						GroupID: 1,
+						UserID:  "test_user_id",
+					}, nil
 				},
 			}
 
@@ -360,6 +468,75 @@ func TestHandleSettlements_All(t *testing.T) {
 
 			if status := rr.Code; status != http.StatusNoContent {
 				t.Errorf("expected status code %d, got %d", http.StatusNoContent, status)
+			}
+		})
+
+		t.Run("user not a member of the group", func(t *testing.T) {
+			server.repos.Settlement = &db_mock.SettlementRepo{
+				GetFn: func(tx *sql.Tx, settlementID int64) (*planetscale.Settlement, error) {
+					return &planetscale.Settlement{
+						SettlementID: 1,
+						GroupID:      1,
+					}, nil
+				},
+			}
+			server.repos.GroupMember = &db_mock.GroupMemberRepo{
+				GetFn: func(tx *sql.Tx, groupID int64, userID string) (*planetscale.GroupMember, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "group member not found")
+				},
+			}
+
+			token := server.buildJWTForTesting(t, "test_user_id")
+			req, err := http.NewRequest("DELETE", "/settlements/1", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+
+			got := ErrorResponse{}
+			err = json.Unmarshal(rr.Body.Bytes(), &got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.Error != "group member not found" {
+				t.Errorf("expected error message %s, got %s", "member not found", got.Error)
+			}
+		})
+
+		t.Run("settlement not found", func(t *testing.T) {
+			server.repos.Settlement = &db_mock.SettlementRepo{
+				GetFn: func(tx *sql.Tx, settlementID int64) (*planetscale.Settlement, error) {
+					return nil, planetscale.Errorf(planetscale.ENOTFOUND, "settlement not found")
+				},
+			}
+
+			token := server.buildJWTForTesting(t, "test_user_id")
+			req, err := http.NewRequest("DELETE", "/settlements/1", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			rr := httptest.NewRecorder()
+			handler := http.HandlerFunc(server.router.ServeHTTP)
+			handler.ServeHTTP(rr, req)
+			if status := rr.Code; status != http.StatusNotFound {
+				t.Errorf("expected status code %d, got %d", http.StatusNotFound, status)
+			}
+
+			got := ErrorResponse{}
+			err = json.Unmarshal(rr.Body.Bytes(), &got)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.Error != "settlement not found" {
+				t.Errorf("expected error message %s, got %s", "settlement not found", got.Error)
 			}
 		})
 	})
