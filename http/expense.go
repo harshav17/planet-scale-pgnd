@@ -87,6 +87,12 @@ type findExpensesResponse struct {
 }
 
 func (c *expenseController) HandleGetExpense(w http.ResponseWriter, r *http.Request) {
+	user, found := planetscale.UserFromContext(r.Context())
+	if !found {
+		Error(w, r, planetscale.Errorf(planetscale.ENOTFOUND, "user context not set"))
+		return
+	}
+
 	expense32, err := strconv.Atoi(chi.URLParam(r, "expenseID"))
 	if err != nil {
 		Error(w, r, err)
@@ -102,7 +108,7 @@ func (c *expenseController) HandleGetExpense(w http.ResponseWriter, r *http.Requ
 		}
 
 		// check if user is a member of the group
-		_, err = c.repos.GroupMember.Get(tx, expense.GroupID, expense.PaidBy)
+		_, err = c.repos.GroupMember.Get(tx, expense.GroupID, user.UserID)
 		if err != nil {
 			return err
 		}
