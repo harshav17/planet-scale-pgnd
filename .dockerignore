@@ -1,0 +1,7 @@
+# flyctl launch added from .gitignore
+**/.env
+**/cmd/planetscaled/__debug_*
+**/tmp/*
+**/node_modules
+**/docker
+fly.toml
