@@ -14,13 +14,16 @@ primary_region = "sjc"
 
 [env]
   PORT = "8080"
+  APP_ENV = "production"
+  AUTH0_DOMAIN = "squabble.us.auth0.com"
+  AUTH0_AUDIENCE = "https://squabble-be.fly.dev"
 
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 1
   processes = ["app"]
 
 [[vm]]

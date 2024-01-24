@@ -20,7 +20,8 @@ func main() {
 	// Load in the `.env` file
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("failed to load env", err)
+		// warn if no .env file found
+		log.Println("No .env file found")
 	}
 
 	// Setup signal handlers.
@@ -66,8 +67,6 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	DSN, ok := os.LookupEnv("DSN")
 	if !ok {
 		slog.Error("DSN not set")
-	} else {
-		slog.Info(DSN)
 	}
 
 	// database
