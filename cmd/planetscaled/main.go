@@ -108,7 +108,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	controllers.SplitType = http.NewSplitTypeController(&repos, tm)
 
 	// middleware
-	c := cache.New(5*time.Minute, 10*time.Minute)
+	c := cache.New(10*time.Minute, 10*time.Minute)
 	middleware := http.NewMiddleware(&repos, tm, c)
 
 	// start the HTTP server.
