@@ -12,17 +12,20 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	planetscale "github.com/harshav17/planet_scale"
+	"github.com/patrickmn/go-cache"
 )
 
 type Middleware struct {
 	repos *planetscale.RepoProvider
 	tm    planetscale.TransactionManager
+	c     *cache.Cache
 }
 
-func NewMiddleware(repoProvider *planetscale.RepoProvider, tm planetscale.TransactionManager) *Middleware {
+func NewMiddleware(repoProvider *planetscale.RepoProvider, tm planetscale.TransactionManager, c *cache.Cache) *Middleware {
 	return &Middleware{
 		repos: repoProvider,
 		tm:    tm,
+		c:     c,
 	}
 }
 
@@ -82,6 +85,18 @@ func (m Middleware) SetUserContext() func(next http.Handler) http.Handler {
 				Name:   customClaims.Name,
 			}))
 
+			// check if the user data is latest
+			// TODO use redis instead eventually
+			cacheUser, found := m.c.Get(auth0ID)
+			if found {
+				retClaims := cacheUser.(*planetscale.CustomClaims)
+				if retClaims.Email == customClaims.Email && retClaims.Name == customClaims.Name {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
+			// if not found OR if the data is not latest, then update the cache and DB
 			// Update user to the latest information from Auth0.
 			upsertUserFunc := func(tx *sql.Tx) error {
 				err := m.repos.User.Upsert(tx, &planetscale.User{
@@ -100,6 +115,8 @@ func (m Middleware) SetUserContext() func(next http.Handler) http.Handler {
 				Error(w, r, err)
 				return
 			}
+
+			m.c.Set(auth0ID, customClaims, cache.DefaultExpiration)
 
 			next.ServeHTTP(w, r)
 		})

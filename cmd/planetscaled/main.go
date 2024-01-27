@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"time"
 
 	planetscale "github.com/harshav17/planet_scale"
 	"github.com/harshav17/planet_scale/db"
@@ -14,6 +15,7 @@ import (
 	"github.com/harshav17/planet_scale/service"
 	utilities "github.com/harshav17/planet_scale/utilites"
 	"github.com/joho/godotenv"
+	"github.com/patrickmn/go-cache"
 )
 
 func main() {
@@ -106,7 +108,8 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	controllers.SplitType = http.NewSplitTypeController(&repos, tm)
 
 	// middleware
-	middleware := http.NewMiddleware(&repos, tm)
+	c := cache.New(5*time.Minute, 10*time.Minute)
+	middleware := http.NewMiddleware(&repos, tm, c)
 
 	// start the HTTP server.
 	m.HTTPServer = http.NewServer(&controllers, middleware)

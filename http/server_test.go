@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	planetscale "github.com/harshav17/planet_scale"
 	db_mock "github.com/harshav17/planet_scale/mock/db"
+	"github.com/patrickmn/go-cache"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -56,7 +58,8 @@ func MustOpenServer(tb testing.TB) TestServer {
 	controllers.Settlement = NewSettlementController(&repos, &tm)
 	controllers.SplitType = NewSplitTypeController(&repos, &tm)
 
-	middleware := NewMiddleware(&repos, &tm)
+	c := cache.New(5*time.Minute, 10*time.Minute)
+	middleware := NewMiddleware(&repos, &tm, c)
 
 	server := NewServer(&controllers, middleware)
 
