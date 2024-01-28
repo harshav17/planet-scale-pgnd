@@ -48,6 +48,81 @@ func TestExpenseParticipantRepo_All(t *testing.T) {
 		})
 	})
 
+	t.Run("Upsert Tests", func(t *testing.T) {
+		t.Run("successful insert and update", func(t *testing.T) {
+			tx, err := db.db.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback()
+
+			u := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id",
+				Name:   "test user",
+				Email:  "",
+			})
+
+			g := MustCreateExpenseGroup(t, tx, db.DB, &planetscale.ExpenseGroup{
+				GroupName: "test group",
+				CreateBy:  u.UserID,
+			})
+
+			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
+				GroupID:     g.ExpenseGroupID,
+				PaidBy:      u.UserID,
+				SplitTypeID: 1,
+				Amount:      100,
+				Description: "test expense",
+				Timestamp:   time.Now(),
+				CreatedBy:   u.UserID,
+				UpdatedBy:   u.UserID,
+			})
+
+			ep := &planetscale.ExpenseParticipant{
+				ExpenseID:       e.ExpenseID,
+				UserID:          u.UserID,
+				AmountOwed:      100,
+				SharePercentage: 100,
+				Note:            "test expense",
+			}
+
+			if err := NewExpenseParticipantRepo(db.DB).Upsert(tx, ep); err != nil {
+				t.Fatal(err)
+			}
+
+			// get expense and check if expense id and created at is set
+			got, err := NewExpenseParticipantRepo(db.DB).Get(tx, ep.ExpenseID, ep.UserID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.ExpenseID != ep.ExpenseID {
+				t.Fatalf("expected expense id %d, got %d", ep.ExpenseID, got.ExpenseID)
+			} else if got.UserID != ep.UserID {
+				t.Fatalf("expected user id %s, got %s", ep.UserID, got.UserID)
+			} else if got.AmountOwed != ep.AmountOwed {
+				t.Fatalf("expected amount owed %f, got %f", ep.AmountOwed, got.AmountOwed)
+			} else if got.SharePercentage != ep.SharePercentage {
+				t.Fatalf("expected share percentage %f, got %f", ep.SharePercentage, got.SharePercentage)
+			} else if got.Note != ep.Note {
+				t.Fatalf("expected note %s, got %s", ep.Note, got.Note)
+			}
+
+			ep.AmountOwed = 200
+			if err := NewExpenseParticipantRepo(db.DB).Upsert(tx, ep); err != nil {
+				t.Fatal(err)
+			}
+
+			// get expense and check if amount is updated
+			got, err = NewExpenseParticipantRepo(db.DB).Get(tx, ep.ExpenseID, ep.UserID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.AmountOwed != ep.AmountOwed {
+				t.Fatalf("expected amount owed %f, got %f", ep.AmountOwed, got.AmountOwed)
+			}
+		})
+	})
+
 	t.Run("Get Tests", func(t *testing.T) {
 		t.Run("successful get", func(t *testing.T) {
 			tx, err := db.db.BeginTx(ctx, nil)

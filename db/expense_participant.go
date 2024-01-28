@@ -69,6 +69,30 @@ func (r *expenseParticipantRepo) Create(tx *sql.Tx, participant *planetscale.Exp
 	return nil
 }
 
+func (r *expenseParticipantRepo) Upsert(tx *sql.Tx, participant *planetscale.ExpenseParticipant) error {
+	query := `
+		INSERT INTO expense_participants (
+			expense_id,
+			user_id,
+			amount_owed,
+			share_percentage,
+			note
+		) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE amount_owed = ?, share_percentage = ?, note = ?
+	`
+
+	result, err := tx.Exec(query, participant.ExpenseID, participant.UserID, participant.AmountOwed, participant.SharePercentage, participant.Note, participant.AmountOwed, participant.SharePercentage, participant.Note)
+	if err != nil {
+		return err
+	}
+	_, err = result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	slog.Info("upserted expense participant", slog.Int64("id", participant.ExpenseID), slog.String("user_id", participant.UserID))
+
+	return nil
+}
+
 func (r *expenseParticipantRepo) Delete(tx *sql.Tx, expenseID int64, userID string) error {
 	query := `
 		DELETE FROM expense_participants

@@ -66,6 +66,60 @@ func (r *expenseRepo) Create(tx *sql.Tx, expense *planetscale.Expense) error {
 	return nil
 }
 
+func (r *expenseRepo) Upsert(tx *sql.Tx, expense *planetscale.Expense) error {
+	query := `
+		INSERT INTO 
+			expenses (
+				group_id, 
+				paid_by, 
+				amount, 
+				description, 
+				timestamp, 
+				created_by, 
+				updated_by, 
+				split_type_id
+			) 
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
+			ON DUPLICATE KEY UPDATE 
+				group_id = ?, 
+				paid_by = ?, 
+				amount = ?, 
+				description = ?, 
+				timestamp = ?, 
+				updated_by = ?, 
+				split_type_id = ?`
+
+	result, err := tx.Exec(
+		query,
+		expense.GroupID,
+		expense.PaidBy,
+		expense.Amount,
+		expense.Description,
+		(*NullTime)(&expense.Timestamp),
+		expense.CreatedBy,
+		expense.CreatedBy,
+		expense.SplitTypeID,
+		expense.GroupID,
+		expense.PaidBy,
+		expense.Amount,
+		expense.Description,
+		(*NullTime)(&expense.Timestamp),
+		expense.CreatedBy,
+		expense.SplitTypeID,
+	)
+	if err != nil {
+		return err
+	}
+	expenseID, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+	expense.ExpenseID = expenseID
+	slog.Info("upserted expense", slog.Int64("id", expense.ExpenseID))
+
+	return nil
+}
+
 func (r *expenseRepo) Update(tx *sql.Tx, expenseID int64, update *planetscale.ExpenseUpdate) (*planetscale.Expense, error) {
 	expense, err := r.Get(tx, expenseID)
 	if err != nil {

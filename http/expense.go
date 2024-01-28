@@ -268,6 +268,52 @@ func (c *expenseController) HandlePatchExpense(w http.ResponseWriter, r *http.Re
 		if err != nil {
 			return err
 		}
+
+		// update expense participants
+		if expenseUpdate.Participants != nil {
+			// TODO conver all the queries in this block to Batch queries
+			// find existing participants
+			existingParticipants, err := c.repos.ExpenseParticipant.Find(tx, planetscale.ExpenseParticipantFilter{
+				ExpenseID: expenseID,
+			})
+			if err != nil {
+				return err
+			}
+
+			// delete participants that are not in the update
+			for _, existingParticipant := range existingParticipants {
+				found := false
+				for _, participant := range expenseUpdate.Participants {
+					if existingParticipant.UserID == participant.UserID {
+						found = true
+						break
+					}
+				}
+				if !found {
+					err := c.repos.ExpenseParticipant.Delete(tx, expenseID, existingParticipant.UserID)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
+			// upsert participants
+			for _, participant := range expenseUpdate.Participants {
+				err := c.repos.ExpenseParticipant.Upsert(tx, participant)
+				if err != nil {
+					return err
+				}
+			}
+
+			// get updated participants
+			expense.Participants, err = c.repos.ExpenseParticipant.Find(tx, planetscale.ExpenseParticipantFilter{
+				ExpenseID: expenseID,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	}
 

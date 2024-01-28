@@ -46,6 +46,68 @@ func TestExpenseRepo_All(t *testing.T) {
 		})
 	})
 
+	t.Run("Upsert Tests", func(t *testing.T) {
+		t.Run("successful insert and update", func(t *testing.T) {
+			tx, err := db.db.BeginTx(ctx, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tx.Rollback()
+
+			u := MustCreateUser(t, tx, db.DB, &planetscale.User{
+				UserID: "test-user-id",
+				Name:   "test user",
+				Email:  "",
+			})
+
+			eg := MustCreateExpenseGroup(t, tx, db.DB, &planetscale.ExpenseGroup{
+				GroupName: "test group",
+				CreateBy:  u.UserID,
+			})
+
+			e := &planetscale.Expense{
+				GroupID:     eg.ExpenseGroupID,
+				PaidBy:      u.UserID,
+				SplitTypeID: 1,
+				Amount:      100,
+				Description: "test expense",
+				Timestamp:   time.Now(),
+				CreatedBy:   u.UserID,
+			}
+
+			if err := NewExpenseRepo(db.DB).Upsert(tx, e); err != nil {
+				t.Fatal(err)
+			}
+
+			// get expense and check if expense id and created at is set
+			got, err := NewExpenseRepo(db.DB).Get(tx, e.ExpenseID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.ExpenseID == 0 {
+				t.Fatal("expected expense id to be set")
+			} else if got.CreatedAt.IsZero() {
+				t.Fatal("expected created at to be set")
+			} else if got.UpdatedAt.IsZero() {
+				t.Fatal("expected updated at to be set")
+			}
+
+			e.Amount = 200
+			if err := NewExpenseRepo(db.DB).Upsert(tx, e); err != nil {
+				t.Fatal(err)
+			}
+
+			// get expense and check if amount is updated
+			got, err = NewExpenseRepo(db.DB).Get(tx, e.ExpenseID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.Amount != e.Amount {
+				t.Fatalf("expected amount to be %f, got %f", e.Amount, got.Amount)
+			}
+		})
+	})
+
 	t.Run("Get Tests", func(t *testing.T) {
 		t.Run("successful get", func(t *testing.T) {
 			tx, err := db.db.BeginTx(ctx, nil)

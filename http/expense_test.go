@@ -294,10 +294,63 @@ func TestHandleExpense_All(t *testing.T) {
 					}, nil
 				},
 			}
+			findCallCount := 0
+			server.repos.ExpenseParticipant = &db_mock.ExpenseParticipantRepo{
+				FindFn: func(tx *sql.Tx, filter planetscale.ExpenseParticipantFilter) ([]*planetscale.ExpenseParticipant, error) {
+					findCallCount++
+					if findCallCount == 1 {
+						return []*planetscale.ExpenseParticipant{
+							{
+								ExpenseID:       1,
+								UserID:          userID,
+								AmountOwed:      100,
+								SharePercentage: 100,
+								Note:            "test expense",
+							},
+						}, nil
+					} else {
+						return []*planetscale.ExpenseParticipant{
+							{
+								ExpenseID:       1,
+								UserID:          userID,
+								AmountOwed:      200,
+								SharePercentage: 100,
+								Note:            "test expense",
+							},
+							{
+								ExpenseID:       1,
+								UserID:          "test-user-id-2",
+								AmountOwed:      200,
+								SharePercentage: 100,
+								Note:            "test expense",
+							},
+						}, nil
+					}
+				},
+				DeleteFn: func(tx *sql.Tx, expenseID int64, userID string) error {
+					return nil
+				},
+				UpsertFn: func(tx *sql.Tx, expense *planetscale.ExpenseParticipant) error {
+					return nil
+				},
+			}
 
 			expenseUpdate := planetscale.ExpenseUpdate{
 				Amount: &newAmount,
+				Participants: []*planetscale.ExpenseParticipant{
+					{
+						ExpenseID: 1,
+						UserID:    userID,
+						Note:      "test expense",
+					},
+					{
+						ExpenseID: 1,
+						UserID:    "test-user-id-2",
+						Note:      "test expense",
+					},
+				},
 			}
+
 			body, err := json.Marshal(expenseUpdate)
 			if err != nil {
 				t.Fatal(err)
@@ -329,6 +382,8 @@ func TestHandleExpense_All(t *testing.T) {
 				t.Fatalf("expected group id 1, got %d", got.GroupID)
 			} else if got.Amount != newAmount {
 				t.Fatalf("expected amount %f, got %f", newAmount, got.Amount)
+			} else if len(got.Participants) != 2 {
+				t.Fatalf("expected 2 participants, got %d", len(got.Participants))
 			}
 		})
 

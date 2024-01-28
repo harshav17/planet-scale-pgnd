@@ -9,6 +9,7 @@ import (
 type ExpenseRepo struct {
 	GetFn    func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error)
 	CreateFn func(tx *sql.Tx, expense *planetscale.Expense) error
+	UpsertFn func(tx *sql.Tx, expense *planetscale.Expense) error
 	DeleteFn func(tx *sql.Tx, expenseID int64) error
 	UpdateFn func(tx *sql.Tx, expenseID int64, expense *planetscale.ExpenseUpdate) (*planetscale.Expense, error)
 	FindFn   func(tx *sql.Tx, filter planetscale.ExpenseFilter) ([]*planetscale.Expense, error)
@@ -20,6 +21,10 @@ func (s ExpenseRepo) Get(tx *sql.Tx, expenseID int64) (*planetscale.Expense, err
 
 func (s ExpenseRepo) Create(tx *sql.Tx, expense *planetscale.Expense) error {
 	return s.CreateFn(tx, expense)
+}
+
+func (s ExpenseRepo) Upsert(tx *sql.Tx, expense *planetscale.Expense) error {
+	return s.UpsertFn(tx, expense)
 }
 
 func (s ExpenseRepo) Delete(tx *sql.Tx, expenseID int64) error {
