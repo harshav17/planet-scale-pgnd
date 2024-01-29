@@ -113,6 +113,11 @@ func (c *expenseController) HandleGetExpense(w http.ResponseWriter, r *http.Requ
 			return err
 		}
 
+		// get expense participants
+		expense.Participants, err = c.repos.ExpenseParticipant.Find(tx, planetscale.ExpenseParticipantFilter{
+			ExpenseID: expenseID,
+		})
+
 		return nil
 	}
 
