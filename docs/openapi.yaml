@@ -1,0 +1,110 @@
+openapi: 3.0.0
+info:
+  title: Expense API
+  version: "1.0"
+servers:
+  - url: https://squabble-be.fly.dev/
+paths:
+  /groups/{groupID}/expenses:
+    get:
+      summary: Get group expenses
+      operationId: getGroupExpenses
+      tags:
+        - expenses
+      parameters:
+        - name: groupID
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of expenses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/findExpensesResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+      security:
+        - bearerAuth: []
+  /expenses/{expenseID}:
+    get:
+      summary: Get an expense
+      operationId: getExpense
+      tags:
+        - expenses
+      parameters:
+        - name: expenseID
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Details of an expense
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    findExpensesResponse:
+      type: object
+      properties:
+        Expenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Expense'
+        N:
+          type: integer
+    Expense:
+      type: object
+      properties:
+        # Example properties, replace with actual Expense structure
+        id:
+          type: integer
+        description:
+          type: string
+        amount:
+          type: number
+          format: float
+        # Add other properties as needed
+    Error:
+      type: object
+      properties:
+        Code:
+          type: integer
+        Message:
+          type: string
+
+  responses:
+    Error:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

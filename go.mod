@@ -9,6 +9,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/joho/godotenv v1.5.1
 	github.com/lmittmann/tint v1.0.3
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 )
 
 require (
@@ -38,7 +39,6 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc5 // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
-	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/shirou/gopsutil/v3 v3.23.9 // indirect

@@ -12,12 +12,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	planetscale "github.com/harshav17/planet_scale"
+	docs "github.com/harshav17/planet_scale/docs"
 	utilities "github.com/harshav17/planet_scale/utilites"
 	slogchi "github.com/samber/slog-chi"
 )
 
 var (
-	//go:embed all:templates/*
+	//go:embed templates/*
 	templateFS embed.FS
 
 	//go:embed css/*
@@ -61,6 +62,10 @@ func NewServer(controllers *planetscale.ControllerProvider, middleware *Middlewa
 
 	// Assuming your CSS file is in a directory named 'css'
 	s.router.Handle("/css/output.css", http.FileServer(http.FS(css)))
+
+	// Swagger
+	fileServer := http.FileServer(http.FS(docs.Docs))
+	s.router.Handle("/swagger/*", http.StripPrefix("/swagger/", fileServer))
 
 	s.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var data interface{}
