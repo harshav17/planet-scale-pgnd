@@ -37,7 +37,7 @@ func (m Middleware) EnsureValidToken() func(next http.Handler) http.Handler {
 				return
 			}
 
-			upsertUserFunc := func(tx *sql.Tx) error {
+			getUserFunc := func(tx *sql.Tx) error {
 				user, err := m.repos.User.Get(tx, sessClaims.Claims.Subject)
 				if err != nil {
 					return err
@@ -49,7 +49,7 @@ func (m Middleware) EnsureValidToken() func(next http.Handler) http.Handler {
 				return nil
 			}
 
-			err := m.tm.ExecuteInTx(r.Context(), upsertUserFunc)
+			err := m.tm.ExecuteInTx(r.Context(), getUserFunc)
 			if err != nil {
 				Error(w, r, err)
 				return

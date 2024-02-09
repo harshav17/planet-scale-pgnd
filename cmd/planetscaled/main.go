@@ -86,7 +86,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	}
 
 	// svix
-	userWh, err := svix.NewWebhook(os.Getenv("SVIX_SECRET"))
+	userWh, err := svix.NewWebhook(os.Getenv("SVIX_PUT_USER_SECRET"))
 	if err != nil {
 		return fmt.Errorf("cannot create svix webhook: %w", err)
 	}
