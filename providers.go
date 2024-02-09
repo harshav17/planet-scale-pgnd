@@ -8,6 +8,7 @@ type (
 		Expense      ExpenseConroller
 		Settlement   SettlementController
 		SplitType    SplitTypeController
+		User         UserController
 	}
 	RepoProvider struct {
 		Product            ProductRepo

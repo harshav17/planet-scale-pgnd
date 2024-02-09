@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/clerkinc/clerk-sdk-go/clerk"
 	planetscale "github.com/harshav17/planet_scale"
 	"github.com/harshav17/planet_scale/db"
 	"github.com/harshav17/planet_scale/http"
@@ -16,6 +17,7 @@ import (
 	utilities "github.com/harshav17/planet_scale/utilites"
 	"github.com/joho/godotenv"
 	"github.com/patrickmn/go-cache"
+	svix "github.com/svix/svix-webhooks/go"
 )
 
 func main() {
@@ -77,6 +79,18 @@ func (m *Main) Run(ctx context.Context) (err error) {
 		return fmt.Errorf("cannot open db: %w", err)
 	}
 
+	// clerk
+	clerkClient, err := clerk.NewClient(os.Getenv("CLERK_SECRET_KEY"))
+	if err != nil {
+		return fmt.Errorf("cannot create clerk client: %w", err)
+	}
+
+	// svix
+	userWh, err := svix.NewWebhook(os.Getenv("SVIX_SECRET"))
+	if err != nil {
+		return fmt.Errorf("cannot create svix webhook: %w", err)
+	}
+
 	// transaction manager
 	tm := db.NewTransactionManager(m.DB)
 
@@ -106,10 +120,11 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	controllers.Expense = http.NewExpenseController(&repos, &services, tm)
 	controllers.Settlement = http.NewSettlementController(&repos, tm)
 	controllers.SplitType = http.NewSplitTypeController(&repos, tm)
+	controllers.User = http.NewUserController(&repos, tm, userWh)
 
 	// middleware
 	c := cache.New(10*time.Minute, 10*time.Minute)
-	middleware := http.NewMiddleware(&repos, tm, c)
+	middleware := http.NewMiddleware(&repos, tm, c, &clerkClient)
 
 	// start the HTTP server.
 	m.HTTPServer = http.NewServer(&controllers, middleware)

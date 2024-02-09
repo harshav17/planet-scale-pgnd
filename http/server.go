@@ -77,7 +77,6 @@ func NewServer(controllers *planetscale.ControllerProvider, middleware *Middlewa
 	})
 
 	s.router.Route("/products", func(r chi.Router) {
-		r.Use(s.middleware.SetUserContext())
 		r.Route("/{productID}", func(r chi.Router) {
 			r.Get("/", controllers.Product.HandleGetProduct)
 		})
@@ -85,8 +84,12 @@ func NewServer(controllers *planetscale.ControllerProvider, middleware *Middlewa
 		r.Get("/add", controllers.Product.HandleProductAdd)
 	})
 
+	s.router.Route("/wh", func(r chi.Router) {
+		r.Post("/put_user", controllers.User.HandlePutUser)
+	})
+
 	s.router.Group(func(r chi.Router) {
-		r.Use(s.middleware.EnsureValidToken(), s.middleware.SetUserContext())
+		r.Use(s.middleware.EnsureValidToken())
 
 		r.Route("/groups", func(r chi.Router) {
 			r.Get("/", controllers.ExpenseGroup.HandleGetExpenseGroups)

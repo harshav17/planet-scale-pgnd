@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/clerkinc/clerk-sdk-go/clerk"
 	planetscale "github.com/harshav17/planet_scale"
 	db_mock "github.com/harshav17/planet_scale/mock/db"
 	"github.com/patrickmn/go-cache"
@@ -59,7 +60,8 @@ func MustOpenServer(tb testing.TB) TestServer {
 	controllers.SplitType = NewSplitTypeController(&repos, &tm)
 
 	c := cache.New(5*time.Minute, 10*time.Minute)
-	middleware := NewMiddleware(&repos, &tm, c)
+	client, _ := clerk.NewClient("test")
+	middleware := NewMiddleware(&repos, &tm, c, &client)
 
 	server := NewServer(&controllers, middleware)
 
