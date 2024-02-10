@@ -25,6 +25,10 @@ func NewMiddleware(repoProvider *planetscale.RepoProvider, tm planetscale.Transa
 	}
 }
 
+func (m Middleware) withClerkSession() func(next http.Handler) http.Handler {
+	return clerk.WithSessionV2(*m.clerk)
+}
+
 // EnsureValidToken is a middleware that will check the validity of our JWT.
 func (m Middleware) EnsureValidToken() func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -54,6 +58,9 @@ func (m Middleware) EnsureValidToken() func(next http.Handler) http.Handler {
 				Error(w, r, err)
 				return
 			}
+
+			// signed out
+			next.ServeHTTP(w, r)
 		})
 	}
 }

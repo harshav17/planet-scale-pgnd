@@ -89,6 +89,7 @@ func NewServer(controllers *planetscale.ControllerProvider, middleware *Middlewa
 	})
 
 	s.router.Group(func(r chi.Router) {
+		r.Use(s.middleware.withClerkSession())
 		r.Use(s.middleware.EnsureValidToken())
 
 		r.Route("/groups", func(r chi.Router) {
