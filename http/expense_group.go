@@ -47,22 +47,12 @@ func (c *expenseGroupController) HandleGetExpenseGroups(w http.ResponseWriter, r
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(findExpenseGroupsResponse{
-			ExpenseGroups: expenseGroups,
-			N:             len(expenseGroups),
-		}); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(findExpenseGroupsResponse{
+		ExpenseGroups: expenseGroups,
+		N:             len(expenseGroups),
+	}); err != nil {
+		Error(w, r, err)
 		return
 	}
 }
@@ -112,19 +102,9 @@ func (c *expenseGroupController) HandlePostExpenseGroup(w http.ResponseWriter, r
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(expenseGroup); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(expenseGroup); err != nil {
+		Error(w, r, err)
 		return
 	}
 }
@@ -174,19 +154,9 @@ func (c *expenseGroupController) HandlePatchExpenseGroup(w http.ResponseWriter, 
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(expenseGroup); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(expenseGroup); err != nil {
+		Error(w, r, err)
 		return
 	}
 }
@@ -227,17 +197,7 @@ func (c *expenseGroupController) HandleDeleteExpenseGroup(w http.ResponseWriter,
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.WriteHeader(http.StatusNoContent)
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
-		return
-	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (c *expenseGroupController) HandleGetExpenseGroup(w http.ResponseWriter, r *http.Request) {
@@ -294,19 +254,9 @@ func (c *expenseGroupController) HandleGetGroupBalances(w http.ResponseWriter, r
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(balances); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(balances); err != nil {
+		Error(w, r, err)
 		return
 	}
 }

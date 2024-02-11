@@ -37,19 +37,9 @@ func (c *splitTypeController) HandleGetAllSplitTypes(w http.ResponseWriter, r *h
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(splitTypes); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(splitTypes); err != nil {
+		Error(w, r, err)
 		return
 	}
 }

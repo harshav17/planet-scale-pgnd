@@ -61,22 +61,12 @@ func (c *expenseController) HandleGetGroupExpenses(w http.ResponseWriter, r *htt
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(findExpensesResponse{
-			Expenses: expenses,
-			N:        len(expenses),
-		}); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(findExpensesResponse{
+		Expenses: expenses,
+		N:        len(expenses),
+	}); err != nil {
+		Error(w, r, err)
 		return
 	}
 }
@@ -127,19 +117,9 @@ func (c *expenseController) HandleGetExpense(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(expense); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(expense); err != nil {
+		Error(w, r, err)
 		return
 	}
 }
@@ -223,17 +203,7 @@ func (c *expenseController) HandleDeleteExpense(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.WriteHeader(http.StatusNoContent)
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
-		return
-	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (c *expenseController) HandlePatchExpense(w http.ResponseWriter, r *http.Request) {
@@ -328,19 +298,9 @@ func (c *expenseController) HandlePatchExpense(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(expense); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(expense); err != nil {
+		Error(w, r, err)
 		return
 	}
 }

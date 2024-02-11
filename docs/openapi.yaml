@@ -3,7 +3,7 @@ info:
   title: Expense API
   version: "1.0"
 servers:
-  - url: https://squabble-be.fly.dev/
+  - url: https://api.skwabbl.com/
 paths:
   /groups/{groupID}/expenses:
     get:

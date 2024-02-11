@@ -45,6 +45,19 @@ func TestHandleExpense_All(t *testing.T) {
 					}, nil
 				},
 			}
+			server.repos.ExpenseParticipant = &db_mock.ExpenseParticipantRepo{
+				FindFn: func(tx *sql.Tx, filter planetscale.ExpenseParticipantFilter) ([]*planetscale.ExpenseParticipant, error) {
+					return []*planetscale.ExpenseParticipant{
+						{
+							ExpenseID:       1,
+							UserID:          userID,
+							AmountOwed:      100,
+							SharePercentage: 100,
+							Note:            "test expense",
+						},
+					}, nil
+				},
+			}
 
 			token := server.buildJWTForTesting(t, userID)
 			req, err := http.NewRequest("GET", "/groups/1/expenses", nil)

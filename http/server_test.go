@@ -15,6 +15,7 @@ import (
 	planetscale "github.com/harshav17/planet_scale"
 	db_mock "github.com/harshav17/planet_scale/mock/db"
 	"github.com/patrickmn/go-cache"
+	svix "github.com/svix/svix-webhooks/go"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -58,9 +59,10 @@ func MustOpenServer(tb testing.TB) TestServer {
 	controllers.Expense = NewExpenseController(&repos, &services, &tm)
 	controllers.Settlement = NewSettlementController(&repos, &tm)
 	controllers.SplitType = NewSplitTypeController(&repos, &tm)
+	controllers.User = NewUserController(&repos, &tm, &svix.Webhook{})
 
 	c := cache.New(5*time.Minute, 10*time.Minute)
-	client, _ := clerk.NewClient("test")
+	client, _ := clerk.NewClient("test", clerk.WithBaseURL("http://localhost:8080"))
 	middleware := NewMiddleware(&repos, &tm, c, &client)
 
 	server := NewServer(&controllers, middleware)
@@ -74,7 +76,7 @@ func MustOpenServer(tb testing.TB) TestServer {
 			tb.Fatal(err)
 		}
 	})
-	server.router.HandleFunc("/.well-known/jwks.json", func(w http.ResponseWriter, r *http.Request) {
+	server.router.HandleFunc("/jwks", func(w http.ResponseWriter, r *http.Request) {
 		err := json.NewEncoder(w).Encode(jose.JSONWebKeySet{
 			Keys: []jose.JSONWebKey{jwk.Public()},
 		})
@@ -118,7 +120,7 @@ func (s TestServer) buildJWTForTesting(t testing.TB, subject string) string {
 	}
 
 	claims := jwt.Claims{
-		Issuer:   "http://localhost:8080/",
+		Issuer:   "https://clerk.com:8080/",
 		Audience: []string{"http://localhost:8080"},
 		Subject:  subject,
 	}

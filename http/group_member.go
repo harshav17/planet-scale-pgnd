@@ -122,20 +122,10 @@ func (c *groupMemberController) HandlePostGroupMember(w http.ResponseWriter, r *
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(groupMember); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(groupMember); err != nil {
+		Error(w, r, err)
 		return
 	}
 }
@@ -175,15 +165,5 @@ func (c *groupMemberController) HandleDeleteGroupMember(w http.ResponseWriter, r
 		return
 	}
 
-	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.WriteHeader(http.StatusNoContent)
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
-		return
-	}
+	w.WriteHeader(http.StatusNoContent)
 }
