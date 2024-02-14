@@ -121,6 +121,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 	controllers.Settlement = http.NewSettlementController(&repos, tm)
 	controllers.SplitType = http.NewSplitTypeController(&repos, tm)
 	controllers.User = http.NewUserController(&repos, tm, userWh)
+	controllers.Item = http.NewItemController(&repos, &services, tm)
 
 	// middleware
 	c := cache.New(10*time.Minute, 10*time.Minute)

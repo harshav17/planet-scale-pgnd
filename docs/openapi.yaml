@@ -63,7 +63,67 @@ paths:
           $ref: '#/components/responses/Error'
       security:
         - bearerAuth: []
-
+    patch:
+      summary: Update an expense
+      operationId: updateExpense
+      tags:
+        - expenses
+      parameters:
+        - name: expenseID
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Expense'
+      responses:
+        '200':
+          description: Expense updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+      security:
+        - bearerAuth: []
+  /expenses:
+    post:
+      summary: Create an expense
+      operationId: createExpense
+      tags:
+        - expenses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Expense'
+      responses:
+        '201':
+          description: Expense created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '400':
+          $ref: '#/components/responses/Error'
+        '401':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+      security:
+        - bearerAuth: []
 components:
   schemas:
     findExpensesResponse:

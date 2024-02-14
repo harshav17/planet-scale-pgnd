@@ -60,6 +60,7 @@ func MustOpenServer(tb testing.TB) TestServer {
 	controllers.Settlement = NewSettlementController(&repos, &tm)
 	controllers.SplitType = NewSplitTypeController(&repos, &tm)
 	controllers.User = NewUserController(&repos, &tm, &svix.Webhook{})
+	controllers.Item = NewItemController(&repos, &services, &tm)
 
 	c := cache.New(5*time.Minute, 10*time.Minute)
 	client, _ := clerk.NewClient("test", clerk.WithBaseURL("http://localhost:8080"))

@@ -9,7 +9,9 @@ type (
 		Settlement   SettlementController
 		SplitType    SplitTypeController
 		User         UserController
+		Item         ItemController
 	}
+
 	RepoProvider struct {
 		Product            ProductRepo
 		ExpenseGroup       ExpenseGroupRepo

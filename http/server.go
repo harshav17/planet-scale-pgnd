@@ -130,6 +130,10 @@ func NewServer(controllers *planetscale.ControllerProvider, middleware *Middlewa
 		r.Route("/split_types", func(r chi.Router) {
 			r.Get("/", controllers.SplitType.HandleGetAllSplitTypes)
 		})
+
+		r.Route("/items", func(r chi.Router) {
+			r.Post("/", controllers.Item.HandlePostItem)
+		})
 	})
 
 	s.server.Handler = s.router

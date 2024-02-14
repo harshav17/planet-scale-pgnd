@@ -1,6 +1,9 @@
 package planetscale
 
-import "database/sql"
+import (
+	"database/sql"
+	"net/http"
+)
 
 type (
 	Item struct {
@@ -9,6 +12,8 @@ type (
 		Price     float64 `json:"price"`
 		Quantity  int64   `json:"quantity"`
 		ExpenseID int64   `json:"expense_id"`
+
+		Splits []*ItemSplit `json:"splits"`
 	}
 
 	ItemRepo interface {
@@ -27,5 +32,9 @@ type (
 		Name     *string  `json:"name"`
 		Price    *float64 `json:"price"`
 		Quantity *int64   `json:"quantity"`
+	}
+
+	ItemController interface {
+		HandlePostItem(w http.ResponseWriter, r *http.Request)
 	}
 )
