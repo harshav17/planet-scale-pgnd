@@ -38,7 +38,7 @@ func (c *itemController) HandlePostItem(w http.ResponseWriter, r *http.Request) 
 
 		for _, split := range item.Splits {
 			split.ItemID = item.ItemID
-			err = c.repos.ItemSplit.Create(tx, split)
+			err = c.repos.ItemSplitNu.Create(tx, split)
 			if err != nil {
 				return err
 			}

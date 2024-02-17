@@ -13,7 +13,7 @@ type (
 		Quantity  int64   `json:"quantity"`
 		ExpenseID int64   `json:"expense_id"`
 
-		Splits []*ItemSplit `json:"splits"`
+		Splits []*ItemSplitNU `json:"splits"`
 	}
 
 	ItemRepo interface {

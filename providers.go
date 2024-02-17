@@ -22,6 +22,7 @@ type (
 		SplitType          SplitTypeRepo
 		Item               ItemRepo
 		ItemSplit          ItemSplitRepo
+		ItemSplitNu        ItemSplitNURepo
 		User               UserRepo
 	}
 

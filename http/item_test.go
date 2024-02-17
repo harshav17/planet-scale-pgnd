@@ -18,18 +18,20 @@ func TestHnadleItem_All(t *testing.T) {
 
 	t.Run("POST /items", func(t *testing.T) {
 		t.Run("successful create", func(t *testing.T) {
+			userID := "test-user-id"
+			userID2 := "test-user-id-2"
 			item := &planetscale.Item{
 				Name:      "test-item",
 				Price:     10.0,
 				Quantity:  1,
 				ExpenseID: 1,
-				Splits: []*planetscale.ItemSplit{
+				Splits: []*planetscale.ItemSplitNU{
 					{
-						UserID: "test-user-id",
+						UserID: &userID,
 						Amount: 10.0,
 					},
 					{
-						UserID: "test-user-id-2",
+						UserID: &userID2,
 						Amount: 0.0,
 					},
 				},
@@ -40,8 +42,8 @@ func TestHnadleItem_All(t *testing.T) {
 					return nil
 				},
 			}
-			server.repos.ItemSplit = &db_mock.ItemSplitRepo{
-				CreateFn: func(tx *sql.Tx, split *planetscale.ItemSplit) error {
+			server.repos.ItemSplitNu = &db_mock.ItemSplitNURepo{
+				CreateFn: func(tx *sql.Tx, split *planetscale.ItemSplitNU) error {
 					return nil
 				},
 			}
