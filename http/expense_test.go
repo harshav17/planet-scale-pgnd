@@ -24,11 +24,12 @@ func TestHandleExpense_All(t *testing.T) {
 	t.Run("GET /groups/1/expenses", func(t *testing.T) {
 		t.Run("successful find", func(t *testing.T) {
 			userID := "test-user-id"
+			groupID := int64(1)
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				FindFn: func(tx *sql.Tx, filter planetscale.ExpenseFilter) ([]*planetscale.Expense, error) {
 					return []*planetscale.Expense{
 						{
-							GroupID:     1,
+							GroupID:     &groupID,
 							PaidBy:      userID,
 							Amount:      100,
 							Description: "test expense",
@@ -83,18 +84,19 @@ func TestHandleExpense_All(t *testing.T) {
 			if len(got.Expenses) != 1 && got.N != 1 {
 				t.Errorf("expected 1 expense, got %d", len(got.Expenses))
 			}
-			if got.Expenses[0].GroupID != 1 {
-				t.Errorf("expected group id 1, got %d", got.Expenses[0].GroupID)
+			if *got.Expenses[0].GroupID != groupID {
+				t.Errorf("expected group id 1, got %d", *got.Expenses[0].GroupID)
 			}
 		})
 
 		t.Run("user not a member of group", func(t *testing.T) {
 			userID := "test-user-id"
+			groupID := int64(1)
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				FindFn: func(tx *sql.Tx, filter planetscale.ExpenseFilter) ([]*planetscale.Expense, error) {
 					return []*planetscale.Expense{
 						{
-							GroupID:     1,
+							GroupID:     &groupID,
 							PaidBy:      userID,
 							Amount:      100,
 							Description: "test expense",
@@ -130,6 +132,7 @@ func TestHandleExpense_All(t *testing.T) {
 	t.Run("POST /expenses", func(t *testing.T) {
 		t.Run("successful post", func(t *testing.T) {
 			userID := "test-user-id"
+			groupID := int64(1)
 			server.services.Expense = &service_mock.ExpenseService{
 				CreateExpenseFn: func(ctx context.Context, expense *planetscale.Expense) error {
 					expense.ExpenseID = 1
@@ -138,7 +141,7 @@ func TestHandleExpense_All(t *testing.T) {
 			}
 
 			expense := planetscale.Expense{
-				GroupID:     1,
+				GroupID:     &groupID,
 				PaidBy:      userID,
 				Amount:      100,
 				Description: "test expense",
@@ -188,10 +191,11 @@ func TestHandleExpense_All(t *testing.T) {
 	t.Run("GET /expenses/{id}", func(t *testing.T) {
 		t.Run("successful get", func(t *testing.T) {
 			userID := "test-user-id"
+			groupID := int64(1)
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
-						GroupID:     1,
+						GroupID:     &groupID,
 						PaidBy:      userID,
 						Amount:      100,
 						Description: "test expense",
@@ -204,6 +208,19 @@ func TestHandleExpense_All(t *testing.T) {
 					return &planetscale.GroupMember{
 						GroupID: 1,
 						UserID:  userID,
+					}, nil
+				},
+			}
+			server.repos.ExpenseParticipant = &db_mock.ExpenseParticipantRepo{
+				FindFn: func(tx *sql.Tx, filter planetscale.ExpenseParticipantFilter) ([]*planetscale.ExpenseParticipant, error) {
+					return []*planetscale.ExpenseParticipant{
+						{
+							ExpenseID:       1,
+							UserID:          userID,
+							AmountOwed:      100,
+							SharePercentage: 100,
+							Note:            "test expense",
+						},
 					}, nil
 				},
 			}
@@ -229,17 +246,18 @@ func TestHandleExpense_All(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got.GroupID != 1 {
-				t.Errorf("expected group id 1, got %d", got.GroupID)
+			if *got.GroupID != groupID {
+				t.Errorf("expected group id 1, got %d", *got.GroupID)
 			}
 		})
 
 		t.Run("user not a member of group", func(t *testing.T) {
 			userID := "test-user-id"
+			groupID := int64(1)
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
-						GroupID:     1,
+						GroupID:     &groupID,
 						PaidBy:      userID,
 						Amount:      100,
 						Description: "test expense",
@@ -275,10 +293,11 @@ func TestHandleExpense_All(t *testing.T) {
 		t.Run("successful update", func(t *testing.T) {
 			userID := "test-user-id"
 			newAmount := float64(200)
+			groupID := int64(1)
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				UpdateFn: func(tx *sql.Tx, expenseID int64, update *planetscale.ExpenseUpdate) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
-						GroupID:     1,
+						GroupID:     &groupID,
 						PaidBy:      userID,
 						Amount:      newAmount,
 						Description: "test expense",
@@ -289,7 +308,7 @@ func TestHandleExpense_All(t *testing.T) {
 				},
 				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
-						GroupID:     1,
+						GroupID:     &groupID,
 						PaidBy:      userID,
 						Amount:      100,
 						Description: "test expense",
@@ -391,8 +410,8 @@ func TestHandleExpense_All(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got.GroupID != 1 {
-				t.Fatalf("expected group id 1, got %d", got.GroupID)
+			if *got.GroupID != groupID {
+				t.Fatalf("expected group id 1, got %d", *got.GroupID)
 			} else if got.Amount != newAmount {
 				t.Fatalf("expected amount %f, got %f", newAmount, got.Amount)
 			} else if len(got.Participants) != 2 {
@@ -403,10 +422,11 @@ func TestHandleExpense_All(t *testing.T) {
 		t.Run("user not a member of group", func(t *testing.T) {
 			userID := "test-user-id"
 			newAmount := float64(200)
+			groupID := int64(1)
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				UpdateFn: func(tx *sql.Tx, expenseID int64, update *planetscale.ExpenseUpdate) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
-						GroupID:     1,
+						GroupID:     &groupID,
 						PaidBy:      userID,
 						Amount:      newAmount,
 						Description: "test expense",
@@ -417,7 +437,7 @@ func TestHandleExpense_All(t *testing.T) {
 				},
 				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
-						GroupID:     1,
+						GroupID:     &groupID,
 						PaidBy:      userID,
 						Amount:      100,
 						Description: "test expense",
@@ -463,13 +483,14 @@ func TestHandleExpense_All(t *testing.T) {
 	t.Run("DELETE /expenses/{id}", func(t *testing.T) {
 		t.Run("successful delete", func(t *testing.T) {
 			userID := "test-user-id"
+			groupID := int64(1)
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				DeleteFn: func(tx *sql.Tx, expenseID int64) error {
 					return nil
 				},
 				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
-						GroupID:     1,
+						GroupID:     &groupID,
 						PaidBy:      userID,
 						Amount:      100,
 						Description: "test expense",
@@ -505,13 +526,14 @@ func TestHandleExpense_All(t *testing.T) {
 
 		t.Run("user not a member of group", func(t *testing.T) {
 			userID := "test-user-id"
+			groupID := int64(1)
 			server.repos.Expense = &db_mock.ExpenseRepo{
 				DeleteFn: func(tx *sql.Tx, expenseID int64) error {
 					return nil
 				},
 				GetFn: func(tx *sql.Tx, expenseID int64) (*planetscale.Expense, error) {
 					return &planetscale.Expense{
-						GroupID:     1,
+						GroupID:     &groupID,
 						PaidBy:      userID,
 						Amount:      100,
 						Description: "test expense",

@@ -31,8 +31,9 @@ func TestExpenseRepo_All(t *testing.T) {
 			}
 			defer tx.Rollback()
 
+			groupID := int64(1)
 			e := &planetscale.Expense{
-				GroupID:     1,
+				GroupID:     &groupID,
 				PaidBy:      "non-existent-user-id",
 				Amount:      100,
 				Description: "test expense",
@@ -66,7 +67,7 @@ func TestExpenseRepo_All(t *testing.T) {
 			})
 
 			e := &planetscale.Expense{
-				GroupID:     eg.ExpenseGroupID,
+				GroupID:     &eg.ExpenseGroupID,
 				PaidBy:      u.UserID,
 				SplitTypeID: 1,
 				Amount:      100,
@@ -128,7 +129,7 @@ func TestExpenseRepo_All(t *testing.T) {
 			})
 
 			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
-				GroupID:     eg.ExpenseGroupID,
+				GroupID:     &eg.ExpenseGroupID,
 				PaidBy:      u.UserID,
 				SplitTypeID: 1,
 				Amount:      100,
@@ -168,7 +169,7 @@ func TestExpenseRepo_All(t *testing.T) {
 			})
 
 			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
-				GroupID:     eg.ExpenseGroupID,
+				GroupID:     &eg.ExpenseGroupID,
 				PaidBy:      u.UserID,
 				SplitTypeID: 1,
 				Amount:      100,
@@ -211,7 +212,7 @@ func TestExpenseRepo_All(t *testing.T) {
 			})
 
 			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
-				GroupID:     eg.ExpenseGroupID,
+				GroupID:     &eg.ExpenseGroupID,
 				PaidBy:      u.UserID,
 				SplitTypeID: 1,
 				Amount:      100,
@@ -252,7 +253,7 @@ func TestExpenseRepo_All(t *testing.T) {
 			})
 
 			e := MustCreateExpense(t, tx, db.DB, &planetscale.Expense{
-				GroupID:     eg.ExpenseGroupID,
+				GroupID:     &eg.ExpenseGroupID,
 				PaidBy:      u.UserID,
 				SplitTypeID: 1,
 				Amount:      100,
@@ -272,8 +273,8 @@ func TestExpenseRepo_All(t *testing.T) {
 				t.Fatalf("expected 1 expense, got %d", len(got))
 			} else if got[0].ExpenseID != e.ExpenseID {
 				t.Fatalf("expected expense id %d, got %d", e.ExpenseID, got[0].ExpenseID)
-			} else if got[0].GroupID != e.GroupID {
-				t.Fatalf("expected group id %d, got %d", e.GroupID, got[0].GroupID)
+			} else if *got[0].GroupID != *e.GroupID {
+				t.Fatalf("expected group id %d, got %d", *e.GroupID, *got[0].GroupID)
 			} else if got[0].PaidBy != e.PaidBy {
 				t.Fatalf("expected paid by %s, got %s", e.PaidBy, got[0].PaidBy)
 			} else if got[0].Amount != e.Amount {

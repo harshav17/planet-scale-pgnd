@@ -93,7 +93,7 @@ func main() {
 
 		// create fake expense
 		fakeExpense := &planetscale.Expense{
-			GroupID:     fakeExpenseGroup.ExpenseGroupID,
+			GroupID:     &fakeExpenseGroup.ExpenseGroupID,
 			PaidBy:      fakeUser.UserID,
 			Amount:      gofakeit.Price(0, 1000),
 			Description: gofakeit.ProductDescription(),
@@ -108,7 +108,7 @@ func main() {
 
 		// create fake expense 2
 		fakeExpense2 := &planetscale.Expense{
-			GroupID:     fakeExpenseGroup.ExpenseGroupID,
+			GroupID:     &fakeExpenseGroup.ExpenseGroupID,
 			PaidBy:      fakeUser2.UserID,
 			Amount:      gofakeit.Price(0, 1000),
 			Description: gofakeit.ProductDescription(),

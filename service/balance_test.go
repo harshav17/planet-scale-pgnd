@@ -20,6 +20,7 @@ type test struct {
 }
 
 func TestBalanceService_GetGroupBalances_TwoParticipants(t *testing.T) {
+	groupID := int64(1)
 	var twoExpenseParticipants = []*planetscale.ExpenseParticipant{
 		{
 			ExpenseID: 1,
@@ -46,14 +47,14 @@ func TestBalanceService_GetGroupBalances_TwoParticipants(t *testing.T) {
 	var twoExpenses = []*planetscale.Expense{
 		{
 			ExpenseID:   1,
-			GroupID:     1,
+			GroupID:     &groupID,
 			PaidBy:      "test-user-id",
 			Amount:      200,
 			SplitTypeID: 1,
 		},
 		{
 			ExpenseID:   2,
-			GroupID:     1,
+			GroupID:     &groupID,
 			PaidBy:      "test-user-id-2",
 			Amount:      100,
 			SplitTypeID: 1,
@@ -162,6 +163,7 @@ func TestBalanceService_GetGroupBalances_TwoParticipants(t *testing.T) {
 }
 
 func TestBalanceService_GetGroupBalances_ThreeParticipants(t *testing.T) {
+	groupID := int64(1)
 	var threeExpenseParticipants = []*planetscale.ExpenseParticipant{
 		{
 			ExpenseID: 1,
@@ -193,14 +195,14 @@ func TestBalanceService_GetGroupBalances_ThreeParticipants(t *testing.T) {
 	var threeExpenses = []*planetscale.Expense{
 		{
 			ExpenseID:   1,
-			GroupID:     1,
+			GroupID:     &groupID,
 			PaidBy:      "test-user-id",
 			Amount:      300,
 			SplitTypeID: 1,
 		},
 		{
 			ExpenseID:   2,
-			GroupID:     1,
+			GroupID:     &groupID,
 			PaidBy:      "test-user-id-2",
 			Amount:      200,
 			SplitTypeID: 1,
@@ -252,6 +254,7 @@ func TestBalanceService_GetGroupBalances_ThreeParticipants(t *testing.T) {
 }
 
 func TestBalanceService_GetGroupBalances_ItemizedSplit(t *testing.T) {
+	groupID := int64(1)
 	var items = []*planetscale.Item{
 		{
 			ItemID:    1,
@@ -312,7 +315,7 @@ func TestBalanceService_GetGroupBalances_ItemizedSplit(t *testing.T) {
 	var expense = []*planetscale.Expense{
 		{
 			ExpenseID:   1,
-			GroupID:     1,
+			GroupID:     &groupID,
 			PaidBy:      "test-user-id",
 			Amount:      600,
 			SplitTypeID: 3,

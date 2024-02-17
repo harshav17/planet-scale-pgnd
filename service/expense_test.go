@@ -10,6 +10,7 @@ import (
 )
 
 func TestExpenseService_CreateExpense(t *testing.T) {
+	groupID := int64(1)
 	t.Run("successful create", func(t *testing.T) {
 		participant := &planetscale.ExpenseParticipant{
 			UserID: "test-user-id",
@@ -21,7 +22,7 @@ func TestExpenseService_CreateExpense(t *testing.T) {
 		}
 
 		expense := &planetscale.Expense{
-			GroupID:     1,
+			GroupID:     &groupID,
 			PaidBy:      "test-user-id",
 			Amount:      100,
 			SplitTypeID: 1,
@@ -67,7 +68,7 @@ func TestExpenseService_CreateExpense(t *testing.T) {
 
 	t.Run("create equal split type", func(t *testing.T) {
 		expense := &planetscale.Expense{
-			GroupID:     1,
+			GroupID:     &groupID,
 			PaidBy:      "test-user-id",
 			Amount:      100,
 			SplitTypeID: 1,

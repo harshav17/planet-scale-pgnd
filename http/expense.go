@@ -98,7 +98,7 @@ func (c *expenseController) HandleGetExpense(w http.ResponseWriter, r *http.Requ
 		}
 
 		// check if user is a member of the group
-		_, err = c.repos.GroupMember.Get(tx, expense.GroupID, user.UserID)
+		_, err = c.repos.GroupMember.Get(tx, *expense.GroupID, user.UserID)
 		if err != nil {
 			return err
 		}
@@ -185,7 +185,7 @@ func (c *expenseController) HandleDeleteExpense(w http.ResponseWriter, r *http.R
 		if err != nil {
 			return err
 		}
-		_, err = c.repos.GroupMember.Get(tx, expense.GroupID, user.UserID)
+		_, err = c.repos.GroupMember.Get(tx, *expense.GroupID, user.UserID)
 		if err != nil {
 			return err
 		}
@@ -234,7 +234,7 @@ func (c *expenseController) HandlePatchExpense(w http.ResponseWriter, r *http.Re
 		if err != nil {
 			return err
 		}
-		_, err = c.repos.GroupMember.Get(tx, foundExp.GroupID, user.UserID)
+		_, err = c.repos.GroupMember.Get(tx, *foundExp.GroupID, user.UserID)
 		if err != nil {
 			return err
 		}

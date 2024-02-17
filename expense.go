@@ -10,7 +10,7 @@ import (
 type (
 	Expense struct {
 		ExpenseID   int64     `json:"expense_id"`
-		GroupID     int64     `json:"group_id"`
+		GroupID     *int64    `json:"group_id"`
 		SplitTypeID int64     `json:"split_type_id"`
 		PaidBy      string    `json:"paid_by"`
 		Amount      float64   `json:"amount"`

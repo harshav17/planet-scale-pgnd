@@ -127,7 +127,7 @@ func (r *expenseRepo) Update(tx *sql.Tx, expenseID int64, update *planetscale.Ex
 	}
 
 	if update.GroupID != nil {
-		expense.GroupID = *update.GroupID
+		expense.GroupID = update.GroupID
 	}
 	if update.PaidBy != nil {
 		expense.PaidBy = *update.PaidBy

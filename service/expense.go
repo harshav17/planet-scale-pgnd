@@ -29,7 +29,7 @@ func (s *expenseService) CreateExpense(ctx context.Context, expense *planetscale
 		if expense.SplitTypeID == 1 {
 			if len(expense.Participants) == 0 {
 				members, err := s.repos.GroupMember.Find(tx, planetscale.GroupMemberFilter{
-					GroupID: expense.GroupID,
+					GroupID: *expense.GroupID,
 				})
 				if err != nil {
 					return err
