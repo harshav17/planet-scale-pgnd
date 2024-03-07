@@ -3,7 +3,7 @@ info:
   title: Expense API
   version: "1.0"
 servers:
-  - url: https://api.skwabbl.com/
+  - url: https://api.skwabbl.com
 paths:
   /groups/{groupID}/expenses:
     get:
@@ -167,37 +167,32 @@ components:
       properties:
         expense_id:
           type: integer
-          required: true
         group_id:
           type: integer
         split_type_id:
           type: integer
-          required: true
         paid_by:
           type: string
-          required: true
         amount:
           type: number
-          required: true
         description:
           type: string
         timestamp:
           type: string
           format: date-time
-          required: true
         created_by:
           type: string
-          required: true
         updated_by:
           type: string
         created_at:
           type: string
           format: date-time
-          required: true
         updated_at:
           type: string
           format: date-time
-          required: true
+        share_url:
+          type: string
+          description: URL of the webpage to share this expense with friends.
     NewExpense:
       type: object
       properties:
@@ -205,19 +200,15 @@ components:
           type: integer
         split_type_id:
           type: integer
-          required: true
         paid_by:
           type: string
-          required: true
         amount:
           type: number
-          required: true
         description:
           type: string
         timestamp:
           type: string
           format: date-time
-          required: true
     UpdateExpense:
       type: object
       properties:
@@ -237,13 +228,10 @@ components:
       properties:
         name:
           type: string
-          required: true
         price:
           type: number
-          required: true
         quantity:
           type: integer
-          required: true
         splits:
           type: array
           items:
@@ -251,7 +239,6 @@ components:
             properties:
               amount:
                 type: number
-                required: true
               initials:
                 type: string
     Item:
@@ -259,16 +246,12 @@ components:
       properties:
         item_id:
           type: integer
-          required: true
         name:
           type: string
-          required: true
         price:
           type: number
-          required: true
         quantity:
           type: integer
-          required: true
     Error:
       type: object
       properties:

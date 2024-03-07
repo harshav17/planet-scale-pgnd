@@ -139,6 +139,9 @@ func (c *expenseController) HandlePostExpense(w http.ResponseWriter, r *http.Req
 	}
 
 	// add user id to expense
+	if expense.PaidBy == "" {
+		expense.PaidBy = user.UserID
+	}
 	expense.CreatedBy = user.UserID
 	expense.UpdatedBy = user.UserID
 	err = c.services.Expense.CreateExpense(r.Context(), &expense)
@@ -146,21 +149,13 @@ func (c *expenseController) HandlePostExpense(w http.ResponseWriter, r *http.Req
 		Error(w, r, err)
 		return
 	}
+	expense.ShareURL = "https://skwabbl.com/dashboard/expenses/" + strconv.FormatInt(expense.ExpenseID, 10)
 
 	// Format returned data based on HTTP accept header.
-	switch r.Header.Get("Accept") {
-	case "application/json":
-		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(expense); err != nil {
-			Error(w, r, err)
-			return
-		}
-	default:
-		Error(w, r, &planetscale.Error{
-			Code:    planetscale.ENOTIMPLEMENTED,
-			Message: "not implemented",
-		})
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(expense); err != nil {
+		Error(w, r, err)
 		return
 	}
 }

@@ -23,6 +23,9 @@ type (
 
 		PaidByUser   *User                 `json:"paid_by_user"`
 		Participants []*ExpenseParticipant `json:"participants"`
+
+		// for chatgpt use
+		ShareURL string `json:"share_url"`
 	}
 
 	ExpenseRepo interface {
